@@ -1,0 +1,31 @@
+# Only the project's own sources are kept. Never the game: no ISO, no disc files, no code generated
+# from its executable, no saves, no texture packs, no dumps. The player provides their own disc and the
+# game is generated and built on their PC (Instalar MK Armageddon.cmd / the launcher's "Instalar e compilar").
+/*
+!/.gitignore
+!/.gitmodules
+!/.gitattributes
+!/README.md
+!/VERSION
+!/START AQUI.txt
+!/Instalar MK Armageddon.cmd
+!/scripts/
+!/tools_mka/
+!/mka/
+!/xboxrecomp
+!/third_party/
+/third_party/*
+!/third_party/dsp56300
+
+/mka/*
+!/mka/CMakeLists.txt
+!/mka/run.cmd
+!/mka/launcher/
+!/mka/src/
+# generated from the game's executable on the player's PC
+/mka/src/recomp/
+# the online versus is not published yet
+/mka/src/netplay*
+
+__pycache__/
+*.pyc

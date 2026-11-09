@@ -1,0 +1,465 @@
+/*
+ * usb_gamepad.c -- an Xbox controller, as the console's USB stack expects it.
+ *
+ * Descriptors and the input report, from the USB 2.0 specification for the
+ * standard requests and from the device's own published interface class for
+ * the rest. The gamepad is not a HID device: it reports interface class 0x58
+ * subclass 0x42, which is Microsoft's own, and its report has a fixed layout
+ * rather than one described by a HID report descriptor. That is why there is
+ * no report descriptor here and why nothing asks for one.
+ *
+ * Input comes from the host through the existing xbox_input layer, so a real
+ * pad plugged into the PC drives this one.
+ */
+#include "usb_gamepad.h"
+
+#include <string.h>
+
+/* ---- descriptors ------------------------------------------------------- */
+
+static const uint8_t s_device_desc[18] = {
+    18,             /* bLength                                    */
+    0x01,           /* bDescriptorType: DEVICE                    */
+    0x10, 0x01,     /* bcdUSB 1.10                                */
+    0x00,           /* bDeviceClass: per interface                */
+    0x00,           /* bDeviceSubClass                            */
+    0x00,           /* bDeviceProtocol                            */
+    0x08,           /* bMaxPacketSize0: 8                         */
+    0x5E, 0x04,     /* idVendor  0x045E Microsoft                 */
+    0x89, 0x02,     /* idProduct 0x0289 Controller S              */
+    0x21, 0x01,     /* bcdDevice                                  */
+    0x00,           /* iManufacturer: none                        */
+    0x00,           /* iProduct: none                             */
+    0x00,           /* iSerialNumber: none                        */
+    0x01            /* bNumConfigurations                         */
+};
+
+/* Configuration, interface and both endpoints, in the one block a
+ * GET_DESCRIPTOR(CONFIGURATION) returns. wTotalLength covers all of it. */
+static const uint8_t s_config_desc[32] = {
+    /* configuration */
+    9, 0x02, 32, 0x00, 0x01, 0x01, 0x00, 0x80, 50,
+    /* interface: class 0x58 subclass 0x42, the Xbox gamepad's own */
+    9, 0x04, 0x00, 0x00, 0x02, 0x58, 0x42, 0x00, 0x00,
+    /* endpoint 0x81 IN, interrupt, 32 bytes, 4 ms */
+    7, 0x05, 0x81, 0x03, 0x20, 0x00, 0x04,
+    /* endpoint 0x02 OUT, interrupt, 32 bytes, 4 ms -- rumble */
+    7, 0x05, 0x02, 0x03, 0x20, 0x00, 0x04
+};
+
+static uint8_t s_address[USB_GAMEPAD_MAX];
+static uint8_t s_configuration[USB_GAMEPAD_MAX];
+
+uint8_t usb_gamepad_address(int pad) { return s_address[pad & 1]; }
+int usb_gamepad_configured(int pad) { return s_configuration[pad & 1] != 0; }
+
+/* ---- control transfers ------------------------------------------------- */
+
+#define REQ_GET_STATUS         0x00
+#define REQ_CLEAR_FEATURE      0x01
+#define REQ_SET_FEATURE        0x03
+#define REQ_SET_ADDRESS        0x05
+#define REQ_GET_DESCRIPTOR     0x06
+#define REQ_GET_CONFIGURATION  0x08
+#define REQ_SET_CONFIGURATION  0x09
+#define REQ_SET_INTERFACE      0x0B
+
+#define DESC_DEVICE            0x01
+#define DESC_CONFIGURATION     0x02
+#define DESC_STRING            0x03
+
+static int copy_out(uint8_t *out, int max, const uint8_t *src, int len,
+                    uint16_t wLength)
+{
+    /* A device sends the smaller of what was asked for and what it has. */
+    if (len > (int)wLength) len = (int)wLength;
+    if (len > max)          len = max;
+    if (len > 0)            memcpy(out, src, (size_t)len);
+    return len;
+}
+
+int usb_gamepad_control(int pad, const UsbSetup *setup, uint8_t *out, int max)
+{
+    int is_in = (setup->bmRequestType & 0x80) != 0;
+    int type  = (setup->bmRequestType >> 5) & 3;   /* 0 standard, 1 class */
+
+    if (type == 0) {
+        switch (setup->bRequest) {
+        case REQ_GET_DESCRIPTOR:
+            switch (setup->wValue >> 8) {
+            case DESC_DEVICE:
+                return copy_out(out, max, s_device_desc,
+                                (int)sizeof s_device_desc, setup->wLength);
+            case DESC_CONFIGURATION:
+                return copy_out(out, max, s_config_desc,
+                                (int)sizeof s_config_desc, setup->wLength);
+            case DESC_STRING:
+                /* No string descriptors. Stalling is the correct answer and
+                 * the one a host expects; returning an empty descriptor gets
+                 * read as a malformed one. */
+                return -1;
+            default:
+                return -1;
+            }
+
+        case REQ_SET_ADDRESS:
+            s_address[pad & 1] = (uint8_t)(setup->wValue & 0x7F);
+            return 0;                    /* zero-length status stage */
+
+        case REQ_SET_CONFIGURATION:
+            s_configuration[pad & 1] = (uint8_t)(setup->wValue & 0xFF);
+            return 0;
+
+        case REQ_GET_CONFIGURATION:
+            if (!is_in || max < 1) return -1;
+            out[0] = s_configuration[pad & 1];
+            return 1;
+
+        case REQ_GET_STATUS:
+            /* Bus-powered, no remote wakeup. */
+            if (!is_in || max < 2) return -1;
+            out[0] = 0; out[1] = 0;
+            return 2;
+
+        case REQ_CLEAR_FEATURE:
+        case REQ_SET_FEATURE:
+        case REQ_SET_INTERFACE:
+            return 0;
+
+        default:
+            return -1;
+        }
+    }
+
+    /* Vendor requests on the interface -- the XID protocol.
+     *
+     * This is how XAPI tells a controller from any other USB device. The
+     * standard descriptors say "interface class 0x58", which gets the device
+     * enumerated and no further: XAPI then asks for the XID descriptor to
+     * learn what kind of controller it is and how big its reports are, and a
+     * stall there means "not a controller", so the device is enumerated,
+     * configured, and then ignored. Which is exactly what it looked like --
+     * a clean enumeration and a title that still saw no gamepad.
+     */
+    if ((setup->bmRequestType & 0x60u) == 0x40u) {   /* vendor */
+        static const uint8_t xid_desc[16] = {
+            0x10,           /* bLength                                  */
+            0x42,           /* bDescriptorType: XID                     */
+            0x00, 0x01,     /* bcdXid 1.00                              */
+            0x01,           /* bType: gamepad                           */
+            0x02,           /* bSubType: gamepad S                      */
+            20,             /* bMaxInputReportSize                      */
+            6,              /* bMaxOutputReportSize                     */
+            0xFF, 0xFF, 0xFF, 0xFF,   /* wAlternateProductIds[0..1]     */
+            0xFF, 0xFF, 0xFF, 0xFF    /* wAlternateProductIds[2..3]     */
+        };
+        /* Capabilities are the report with every supported field set to all
+         * ones: the same layout, read as a mask. A gamepad S supports every
+         * field of both, so both are filled in apart from the id and length
+         * bytes, which are values rather than flags. */
+        static const uint8_t caps_in[20] = {
+            0x00, 20,
+            0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+        };
+        static const uint8_t caps_out[6] = {
+            0x00, 6, 0xFF, 0xFF, 0xFF, 0xFF
+        };
+
+        if (!is_in)
+            return 0;                     /* accept, nothing to send back */
+        if (setup->bRequest == REQ_GET_DESCRIPTOR
+                && (setup->wValue >> 8) == 0x42)
+            return copy_out(out, max, xid_desc, (int)sizeof xid_desc,
+                            setup->wLength);
+        if (setup->bRequest == 0x01) {    /* GET_CAPABILITIES */
+            if ((setup->wValue >> 8) == 0x01)
+                return copy_out(out, max, caps_in, (int)sizeof caps_in,
+                                setup->wLength);
+            if ((setup->wValue >> 8) == 0x02)
+                return copy_out(out, max, caps_out, (int)sizeof caps_out,
+                                setup->wLength);
+        }
+        return -1;
+    }
+
+    /* Class requests: not ours to guess at. */
+    return -1;
+}
+
+/* ---- the input report -------------------------------------------------- */
+
+/* The host's own pad, through the layer that already maps one to XInput.
+ * A real controller plugged into the PC drives this emulated one. The keyboard and mouse join
+ * the same report (pc_input.c), so the game sees one pad whichever device is in use. */
+#include "../input/xinput_xbox.h"
+#include "../input/pc_input.h"
+#include "../video/pc_split.h"
+
+/* ---- scripted input ----------------------------------------------------- */
+
+/*
+ * RECOMP_PAD_SCRIPT: presses the pad makes on its own, on top of whatever the
+ * host pad reports, so a run can get past a movie or through a menu the same
+ * way every time. A comma-separated list of
+ *
+ *     ms:BUTTON[+BUTTON...][/hold_ms][*period_ms]
+ *
+ * where ms counts from the title's first read of the pad, a press is held for
+ * hold_ms (default 200) and, with *period_ms, repeats that often. Buttons:
+ * A B X Y LB RB LT RT (the analog ones; LB and RB are the Xbox pad's two small buttons) and UP DOWN LEFT RIGHT START
+ * BACK LTHUMB RTHUMB. The sticks, pushed all the way: LS_UP LS_DOWN LS_LEFT
+ * LS_RIGHT, and RS_ the same. Example: "15000:START,17000:A,19000:DOWN,20000:A";
+ * "60000:LS_UP+RS_RIGHT/2000" walks forward turning right for two seconds.
+ * Each press is logged when it starts. A "p2-" prefix makes a press the second pad's (split-screen's player two):
+ * "70000:p2-RT/500".
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
+typedef struct PadPress {
+    uint32_t start_ms, hold_ms, period_ms;
+    uint16_t digital;            /* wButtons bits                        */
+    uint8_t analog;              /* bit i = bAnalogButtons[i] fully down */
+    uint8_t sticks;              /* bit 2*axis, +1 if negative: pushed   */
+    uint8_t pad;                 /* 0 the first pad, 1 the second        */
+    uint32_t logged;             /* last repeat index announced          */
+} PadPress;
+
+#define PAD_SCRIPT_MAX 128
+static PadPress s_script[PAD_SCRIPT_MAX];
+static int s_script_n = -1;
+static uint64_t s_script_t0;
+
+static uint64_t pad_now_ms(void)
+{
+#if defined(_WIN32)
+    return GetTickCount64();
+#else
+    return 0;
+#endif
+}
+
+static int pad_button(const char *name, size_t n, PadPress *p)
+{
+    /* Axes in report order -- LX LY RX RY -- with +X right and +Y up. */
+    static const struct {
+        const char *name; uint16_t digital; int analog, stick;
+    } map[] = {
+        { "UP", 0x01, -1, -1 }, { "DOWN", 0x02, -1, -1 },
+        { "LEFT", 0x04, -1, -1 }, { "RIGHT", 0x08, -1, -1 },
+        { "START", 0x10, -1, -1 }, { "BACK", 0x20, -1, -1 },
+        { "LTHUMB", 0x40, -1, -1 }, { "RTHUMB", 0x80, -1, -1 },
+        { "A", 0, 0, -1 }, { "B", 0, 1, -1 }, { "X", 0, 2, -1 },
+        { "Y", 0, 3, -1 }, { "LB", 0, 4, -1 }, { "RB", 0, 5, -1 },
+        { "LT", 0, 6, -1 }, { "RT", 0, 7, -1 },
+        { "LS_RIGHT", 0, -1, 0 }, { "LS_LEFT", 0, -1, 1 },
+        { "LS_UP", 0, -1, 2 }, { "LS_DOWN", 0, -1, 3 },
+        { "RS_RIGHT", 0, -1, 4 }, { "RS_LEFT", 0, -1, 5 },
+        { "RS_UP", 0, -1, 6 }, { "RS_DOWN", 0, -1, 7 },
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(map) / sizeof(map[0]); i++) {
+        if (strlen(map[i].name) == n && !_strnicmp(map[i].name, name, n)) {
+            if (map[i].stick >= 0)
+                p->sticks |= (uint8_t)(1u << map[i].stick);
+            else if (map[i].analog >= 0)
+                p->analog |= (uint8_t)(1u << map[i].analog);
+            else
+                p->digital |= map[i].digital;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void pad_script_load(void)
+{
+    const char *e = getenv("RECOMP_PAD_SCRIPT");
+
+    s_script_n = 0;
+    while (e && *e && s_script_n < PAD_SCRIPT_MAX) {
+        PadPress *p = &s_script[s_script_n];
+        char *end;
+        const char *q;
+
+        memset(p, 0, sizeof(*p));
+        p->hold_ms = 200;
+        p->logged = ~0u;
+        p->start_ms = (uint32_t)strtoul(e, &end, 10);
+        if (*end != ':')
+            break;
+        q = end + 1;
+        if ((q[0] == 'p' || q[0] == 'P') && q[1] == '2' && q[2] == '-') {
+            p->pad = 1;
+            q += 3;
+        }
+        for (;;) {
+            size_t n = strcspn(q, "+/*,");
+            if (!pad_button(q, n, p)) {
+                fprintf(stderr, "  [PAD] RECOMP_PAD_SCRIPT: unknown button"
+                                " '%.*s'\n", (int)n, q);
+            }
+            q += n;
+            if (*q != '+')
+                break;
+            q++;
+        }
+        if (*q == '/')
+            p->hold_ms = (uint32_t)strtoul(q + 1, (char **)&q, 10);
+        if (*q == '*')
+            p->period_ms = (uint32_t)strtoul(q + 1, (char **)&q, 10);
+        s_script_n++;
+        e = (*q == ',') ? q + 1 : NULL;
+    }
+    if (s_script_n)
+        fprintf(stderr, "  [PAD] %d scripted press(es) from RECOMP_PAD_SCRIPT\n",
+                s_script_n);
+}
+
+/* Presses due now, merged into the report being built. */
+static void pad_script_apply(int pad, uint8_t *out)
+{
+    uint64_t t;
+    int i;
+
+    if (s_script_n < 0)
+        pad_script_load();
+    if (!s_script_n)
+        return;
+    if (!s_script_t0)
+        s_script_t0 = pad_now_ms();
+    t = pad_now_ms() - s_script_t0;
+    for (i = 0; i < s_script_n; i++) {
+        PadPress *p = &s_script[i];
+        uint64_t since, k;
+        int b;
+
+        if (p->pad != pad || t < p->start_ms)
+            continue;
+        since = t - p->start_ms;
+        k = p->period_ms ? since / p->period_ms : 0;
+        if (p->period_ms)
+            since %= p->period_ms;
+        else if (since >= p->hold_ms)
+            continue;
+        if (since >= p->hold_ms)
+            continue;
+        if (p->logged != (uint32_t)k) {
+            p->logged = (uint32_t)k;
+            fprintf(stderr, "  [PAD] t=%llu ms: press %d (pad %d digital %02X analog"
+                            " %02X sticks %02X)\n", (unsigned long long)t, i, pad + 1,
+                    p->digital, p->analog, p->sticks);
+            fflush(stderr);
+        }
+        out[2] |= (uint8_t)p->digital;
+        for (b = 0; b < 8; b++)
+            if (p->analog & (1u << b))
+                out[4 + b] = 0xFF;
+        for (b = 0; b < 8; b++) {
+            if (p->sticks & (1u << b)) {
+                uint16_t v = (b & 1) ? 0x8000u : 0x7FFFu;   /* -32768 : 32767 */
+                out[12 + (b >> 1) * 2] = (uint8_t)(v & 0xFF);
+                out[13 + (b >> 1) * 2] = (uint8_t)(v >> 8);
+            }
+        }
+    }
+}
+
+/*
+ * The Xbox report is 20 bytes and fixed:
+ *
+ *   0      report id, always 0
+ *   1      length, always 20
+ *   2      digital buttons: dpad, start, back, thumb clicks
+ *   3      reserved
+ *   4..11  analog buttons A B X Y Black White, then the two triggers
+ *   12..19 four signed 16-bit stick axes, little endian
+ */
+/* Which host controller plays a pad: RECOMP_PAD1_XINPUT for the first (default 0), RECOMP_PAD2_XINPUT for the
+ * second (default 1). */
+static DWORD pad_port(int pad)
+{
+    const char *e = getenv(pad ? "RECOMP_PAD2_XINPUT" : "RECOMP_PAD1_XINPUT");
+    return e && *e >= '0' && *e <= '3' ? (DWORD)(*e - '0') : (DWORD)pad;
+}
+
+/* RECOMP_RUMBLE=0 keeps the motors still. */
+void usb_gamepad_rumble(int pad, uint8_t strong, uint8_t weak)
+{
+    static int on = -1;
+    XBOX_VIBRATION v;
+    if (on < 0) {
+        const char *e = getenv("RECOMP_RUMBLE");
+        on = !(e && *e == '0');
+    }
+    if (!on || pad < 0 || pad >= USB_GAMEPAD_MAX)
+        return;
+    v.wLeftMotorSpeed = (WORD)(strong * 257u);
+    v.wRightMotorSpeed = (WORD)(weak * 257u);
+    {
+        static unsigned said;
+        if ((strong || weak) && said++ < 3)
+            fprintf(stderr, "  [PAD] rumble on pad %d: strong %u weak %u\n", pad + 1, strong, weak);
+    }
+    xbox_InputSetState(pad_port(pad), &v);
+}
+
+int usb_gamepad_report(int pad, uint8_t *out, int max)
+{
+    XBOX_INPUT_STATE state;
+    const XBOX_GAMEPAD *g;
+    int i;
+
+    if (max < 20)
+        return 0;
+    memset(out, 0, 20);
+    out[0] = 0;
+    out[1] = 20;
+    if (pad) {
+        pc_split_pad_report(out);
+        pad_script_apply(1, out);
+        return 20;
+    }
+
+    /* A disconnected host pad is not an error here: the device is present on
+     * the bus either way, it just reports nothing pressed -- apart from
+     * anything scripted and whatever the keyboard and mouse are doing. */
+    /* RECOMP_PAD1_XINPUT: which host controller is player one (default 0); the
+     * keyboard always drives player one too. */
+    {
+        static int port = -1;
+        if (port < 0) {
+            const char *e = getenv("RECOMP_PAD1_XINPUT");
+            port = e && *e >= '0' && *e <= '3' ? *e - '0' : 0;
+        }
+        if (xbox_InputGetState((DWORD)port, &state) != 0) {
+            pad_script_apply(0, out);
+            /* A configured script stands in for a connected controller, including mode filtering
+             * and activity-driven prompts; it must enter the same merge as real XInput. */
+            pc_input_apply_report(out, s_script_n > 0);
+            return 20;
+        }
+    }
+
+    g = &state.Gamepad;
+    out[2] = (uint8_t)(g->wButtons & 0xFF);
+    out[3] = (uint8_t)((g->wButtons >> 8) & 0xFF);
+    for (i = 0; i < 8; i++)
+        out[4 + i] = g->bAnalogButtons[i];
+    out[12] = (uint8_t)(g->sThumbLX & 0xFF);
+    out[13] = (uint8_t)((g->sThumbLX >> 8) & 0xFF);
+    out[14] = (uint8_t)(g->sThumbLY & 0xFF);
+    out[15] = (uint8_t)((g->sThumbLY >> 8) & 0xFF);
+    out[16] = (uint8_t)(g->sThumbRX & 0xFF);
+    out[17] = (uint8_t)((g->sThumbRX >> 8) & 0xFF);
+    out[18] = (uint8_t)(g->sThumbRY & 0xFF);
+    out[19] = (uint8_t)((g->sThumbRY >> 8) & 0xFF);
+    pad_script_apply(0, out);
+    pc_input_apply_report(out, 1);
+    return 20;
+}
