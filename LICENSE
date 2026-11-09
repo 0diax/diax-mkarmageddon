@@ -19,7 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-This license covers this project's own files. The runtime in xboxrecomp/ and the
-DSP emulator in third_party/dsp56300/ keep their own licenses (see the LICENSE files
-in those folders). Mortal Kombat and the game itself are not part of this project.
