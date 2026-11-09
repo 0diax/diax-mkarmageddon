@@ -1,0 +1,54 @@
+MORTAL KOMBAT: ARMAGEDDON RECOMP - START HERE
+(Português mais abaixo.)
+
+WINDOWS (10/11, 64-bit, graphics card with Direct3D 11)
+
+1. Extract the whole ZIP into a folder you can write to, for example C:\Games\MK Armageddon.
+   Do not run the launcher from inside the ZIP.
+2. Open "MK Armageddon.exe". "Language / Idioma" at the top switches the launcher to Portuguese.
+3. Click "Choose ISO..." and select YOUR Mortal Kombat: Armageddon ISO for the original Xbox (NTSC-U),
+   or the default.xbe of a disc already extracted. The launcher checks that it is the supported release.
+4. Click "Install and compile". The first time, it installs what is missing (Python, CMake, Visual Studio
+   Build Tools and Rust, through winget, asking first) and needs the internet. Generating and compiling
+   take several minutes. At the end the launcher opens again.
+5. Play.
+
+HD TEXTURES (OPTIONAL)
+"Get HD pack (PS2)" and "Get HD remake" open the authors' pages. Download the packs and, in "Open folder",
+extract the downloads as they came (any subfolder works). Open the launcher again and turn on
+"HD textures". The packs are not included; the credits are in README.md.
+
+YOUR GAME FILES
+This download has the launcher and the source code. You provide your own disc; the game's executable is
+generated and compiled on your computer. No game file comes in this package.
+
+PROBLEMS
+If the installation fails, the full log is in install.log, in this folder.
+
+-----------------------------------------------------------------------------------------------------------
+
+MORTAL KOMBAT: ARMAGEDDON RECOMP - COMECE AQUI
+
+WINDOWS (10/11, 64 bits, placa de vídeo com Direct3D 11)
+
+1. Extraia o ZIP inteiro numa pasta com permissão de escrita, por exemplo C:\Jogos\MK Armageddon.
+   Não rode o launcher de dentro do ZIP.
+2. Abra "MK Armageddon.exe" e, em "Language / Idioma", escolha "Português (Brasil)".
+3. Clique em "Escolher a ISO..." e selecione a SUA ISO do Mortal Kombat: Armageddon do Xbox original
+   (NTSC-U), ou o default.xbe de um disco já extraído. O launcher confere se é a versão suportada.
+4. Clique em "Instalar e compilar". Na primeira vez ele instala o que faltar (Python, CMake, Visual Studio
+   Build Tools e Rust, pelo winget, perguntando antes) e precisa de internet. A geração e a compilação
+   demoram vários minutos. No fim o launcher abre de novo.
+5. Jogar.
+
+TEXTURAS HD (OPCIONAL)
+"Baixar pacote HD (PS2)" e "Baixar remake HD" abrem as páginas dos autores. Baixe os pacotes e, em
+"Abrir a pasta", extraia os downloads como vieram (qualquer subpasta serve). Reabra o launcher e ligue
+"Texturas HD". Os pacotes não vêm junto; os créditos estão no README.md.
+
+OS SEUS ARQUIVOS DO JOGO
+Este download traz o launcher e o código-fonte. Você fornece o seu próprio disco; o executável do jogo é
+gerado e compilado no seu computador. Nenhum arquivo do jogo vem neste pacote.
+
+PROBLEMAS
+Se a instalação falhar, o registro completo fica em install.log, nesta pasta.

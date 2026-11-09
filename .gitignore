@@ -1,6 +1,6 @@
 # Only the project's own sources are kept. Never the game: no ISO, no disc files, no code generated
 # from its executable, no saves, no texture packs, no dumps. The player provides their own disc and the
-# game is generated and built on their PC (Instalar MK Armageddon.cmd / the launcher's "Instalar e compilar").
+# game is generated and built on their PC (Install MK Armageddon.cmd / the launcher's "Install and compile").
 /*
 !/.gitignore
 !/.gitmodules
@@ -8,8 +8,9 @@
 !/README.md
 !/LICENSE
 !/VERSION
-!/START AQUI.txt
-!/Instalar MK Armageddon.cmd
+!/START HERE.txt
+!/README.pt-BR.md
+!/Install MK Armageddon.cmd
 !/scripts/
 !/tools_mka/
 !/mka/

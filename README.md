@@ -1,232 +1,237 @@
 # diax-mkarmageddon
 
+<p align="center"><b>English</b> · <a href="README.pt-BR.md">Português (Brasil)</a></p>
+
 <p align="center">
-  <a href="https://github.com/0diax/diax-mkarmageddon/releases/latest"><img src="https://img.shields.io/badge/Download-Latest-2563eb?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="Baixar a versão mais recente"></a>
-  <a href="https://github.com/0diax/diax-mkarmageddon/releases/latest"><img src="https://img.shields.io/github/v/release/0diax/diax-mkarmageddon?style=for-the-badge&amp;logo=github&amp;label=Latest%20release&amp;cacheSeconds=300" alt="Versão mais recente"></a>
-  <a href="https://github.com/0diax/diax-mkarmageddon/releases"><img src="https://img.shields.io/github/downloads/0diax/diax-mkarmageddon/total?style=for-the-badge&amp;logo=github&amp;label=Release%20downloads" alt="Downloads das releases"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="Licença MIT"></a>
+  <a href="https://github.com/0diax/diax-mkarmageddon/releases/latest"><img src="https://img.shields.io/badge/Download-Latest-2563eb?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="Download the latest release"></a>
+  <a href="https://github.com/0diax/diax-mkarmageddon/releases/latest"><img src="https://img.shields.io/github/v/release/0diax/diax-mkarmageddon?style=for-the-badge&amp;logo=github&amp;label=Latest%20release&amp;cacheSeconds=300" alt="Latest release"></a>
+  <a href="https://github.com/0diax/diax-mkarmageddon/releases"><img src="https://img.shields.io/github/downloads/0diax/diax-mkarmageddon/total?style=for-the-badge&amp;logo=github&amp;label=Release%20downloads" alt="Total release downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Progresso-82%25-22c55e?style=for-the-badge" alt="Progresso: 82%">
+  <img src="https://img.shields.io/badge/Progress-82%25-22c55e?style=for-the-badge" alt="Progress: 82%">
 </p>
 
-O **diax-mkarmageddon** é um port nativo para PC do **Mortal Kombat: Armageddon**, feito pela recompilação
-estática do jogo original do Xbox.
+**diax-mkarmageddon** is a native PC port of **Mortal Kombat: Armageddon**, made by statically recompiling the
+original Xbox game.
 
 > [!IMPORTANT]
-> Este projeto não inclui o jogo. Você precisa da **sua própria ISO** do Mortal Kombat: Armageddon do
-> **Xbox original, versão NTSC-U (EUA)**. O código do jogo é gerado e compilado no seu PC a partir dela.
+> This project does not include the game. You need **your own ISO** of Mortal Kombat: Armageddon for the
+> **original Xbox, NTSC-U (USA) release**. The game's code is generated and compiled on your PC from it.
 
-## Sumário
+## Contents
 
-- [Progresso](#progresso)
-- [Requisitos](#requisitos)
-- [Instalação](#instalação)
-- [Atualização](#atualização)
-- [Recursos](#recursos)
-- [Texturas HD](#texturas-hd)
-- [Problemas conhecidos](#problemas-conhecidos)
+- [Progress](#progress)
+- [Requirements](#requirements)
+- [Install](#install)
+- [Update](#update)
+- [Features](#features)
+- [HD textures](#hd-textures)
+- [Known issues](#known-issues)
 - [FAQ](#faq)
-- [Compilação](#compilação)
-- [Créditos](#créditos)
+- [Building](#building)
+- [Credits](#credits)
 
-## Progresso
+## Progress
 
 ```
 █████████████████████████████████████████░░░░░░░░░  82%
 ```
 
-A barra vem de uma análise do código gerado e de testes de cada modo no jogo: dos 19 itens abaixo, os
-funcionando contam inteiros e os parciais contam metade ((14 + 3 × ½) / 19 = 82%).
+The bar comes from an analysis of the generated code and from testing each mode in the game: of the 19 items
+below, the working ones count in full and the partial ones count half ((14 + 3 × ½) / 19 = 82%).
 
-**Código traduzido:** 30.157 funções do executável do jogo. Ficam 10 pontos de chamada sem destino
-identificado (a maioria com endereços inválidos, falsos positivos da análise), e nenhum deles foi atingido
-nos testes.
+**Translated code:** 30,157 functions of the game's executable. 10 call points are left without an identified
+target (most with invalid addresses, false positives of the analysis), and none of them was reached in testing.
 
-| Item | Situação | Observação |
+| Item | Status | Notes |
 |---|---|---|
-| Tradução do código do jogo | ✅ Funcionando | 30.157 funções; 10 pontos sem destino, nunca atingidos |
-| Instalação a partir da ISO | ✅ Funcionando | O launcher confere o disco, gera o código e compila |
-| Gráficos (Direct3D 11) | ✅ Funcionando | Resolução interna de 480p a 4K, FXAA e SSAA |
-| Vídeos (abertura, cenas) | ✅ Funcionando | |
-| Controles | ✅ Funcionando | Xbox, DualShock 4, DualSense, teclado; mouse nos menus |
-| 2 jogadores locais | ✅ Funcionando | O segundo controle entra apertando Start |
-| Perfis e saves | ✅ Funcionando | Criar perfil, entrar com o kode, salvar |
-| Kombat (Arcade, Versus, Practice) | ✅ Funcionando | Seleção de lutadores e lutas |
-| Konquest | 🟡 Parcial | Abertura, cenas e começo testados; a história completa ainda não foi jogada até o fim |
-| Motor Kombat | ✅ Funcionando | Pistas, veículos e corridas |
-| Kreate a Fighter | ✅ Funcionando | Editor de lutador (corpo, roupas, estilos) |
-| The Krypt | ✅ Funcionando | Grade de itens e compras com koins |
-| Extras | ✅ Funcionando | |
-| Options | ✅ Funcionando | Jogo, áudio, vídeo e controles |
-| Widescreen 16:9 e 21:9 | 🟡 Parcial | A câmera abre em widescreen; menus e HUD em 2D ficam esticados |
-| Texturas HD | ✅ Funcionando | Os dois pacotes da comunidade (veja abaixo) |
-| Áudio | 🟡 Parcial | Música, vozes e efeitos funcionam; há relatos de estalos e, raramente, o som não inicia |
-| Multiplayer online | ❌ Não faz parte desta versão | |
-| Xbox Live | ❌ Sem suporte | O serviço original do Xbox não existe mais |
+| Game code translation | ✅ Working | 30,157 functions; 10 call points without a target, never reached |
+| Install from the ISO | ✅ Working | The launcher checks the disc, generates the code and compiles it |
+| Graphics (Direct3D 11) | ✅ Working | Internal resolution from 480p to 4K, FXAA and SSAA |
+| Movies (intro, cutscenes) | ✅ Working | |
+| Controls | ✅ Working | Xbox, DualShock 4, DualSense, keyboard; mouse in the menus |
+| Local 2 players | ✅ Working | The second controller joins by pressing Start |
+| Profiles and saves | ✅ Working | Create a profile, sign in with its kode, save |
+| Kombat (Arcade, Versus, Practice) | ✅ Working | Character select and fights |
+| Konquest | 🟡 Partial | Intro, cutscenes and the start tested; the full story has not been played to the end |
+| Motor Kombat | ✅ Working | Tracks, karts and races |
+| Kreate a Fighter | ✅ Working | Fighter editor (body, clothes, styles) |
+| The Krypt | ✅ Working | Item grid and purchases with koins |
+| Extras | ✅ Working | |
+| Options | ✅ Working | Gameplay, audio, video and controls |
+| Widescreen 16:9 and 21:9 | 🟡 Partial | The camera opens up to widescreen; the 2D menus and HUD are stretched |
+| HD textures | ✅ Working | The two community packs (see below) |
+| Audio | 🟡 Partial | Music, voices and effects work; crackles have been reported and, rarely, the sound does not start |
+| Online multiplayer | ❌ Not part of this version | |
+| Xbox Live | ❌ Not supported | The original Xbox service no longer exists |
 
-## Requisitos
+## Requirements
 
-- Windows 10 ou 11, 64 bits
-- Placa de vídeo com Direct3D 11
-- Cerca de 10 GB livres (o disco copiado e a compilação)
-- Internet na primeira instalação (para baixar as ferramentas de compilação)
-- Controle, ou teclado e mouse
+- Windows 10 or 11, 64-bit
+- Graphics card with Direct3D 11
+- About 10 GB free (the copied disc and the build)
+- Internet for the first install (to download the build tools)
+- Controller, or keyboard and mouse
 
-## Instalação
+## Install
 
-1. Baixe a [versão mais recente](https://github.com/0diax/diax-mkarmageddon/releases/latest):
-   **`MKArmageddon-<versão>-starter.zip`** (não use os downloads "Source code" do GitHub).
-2. Extraia o ZIP inteiro numa pasta com permissão de escrita, por exemplo `C:\Jogos\MK Armageddon`.
-3. Abra **`MK Armageddon.exe`**.
-4. Clique em **Escolher a ISO...** e selecione a sua ISO (ou o `default.xbe` de um disco já extraído).
-5. Clique em **Instalar e compilar**. Na primeira vez ele instala o que faltar pelo `winget`, perguntando
-   antes (Python 3 com `capstone`, CMake, Visual Studio Build Tools e Rust), copia o disco, gera o código do
-   jogo e compila. Leva vários minutos; no fim o launcher abre de novo.
-6. Clique em **Jogar**.
+1. Download the [latest release](https://github.com/0diax/diax-mkarmageddon/releases/latest):
+   **`MKArmageddon-<version>-starter.zip`** (do not use GitHub's "Source code" downloads).
+2. Extract the whole ZIP into a folder you can write to, for example `C:\Games\MK Armageddon`.
+3. Open **`MK Armageddon.exe`**. **Language / Idioma** at the top switches it to Brazilian Portuguese.
+4. Click **Choose ISO...** and select your ISO (or the `default.xbe` of a disc already extracted).
+5. Click **Install and compile**. The first time, it installs what is missing through `winget`, asking first
+   (Python 3 with `capstone`, CMake, Visual Studio Build Tools and Rust), copies the disc, generates the
+   game's code and compiles it. It takes several minutes; at the end the launcher opens again.
+6. Click **Play**.
 
-## Atualização
+## Update
 
-Baixe o ZIP da nova versão e extraia numa pasta nova. Para levar o seu progresso, copie a pasta `mka\save`
-da instalação antiga para a nova, e escolha a ISO e instale de novo.
+Download the new version's ZIP and extract it into a new folder. To keep your progress, copy the `mka\save`
+folder from the old installation into the new one, then choose your ISO and install again.
 
-## Recursos
+## Features
 
-- **Launcher** com a escolha da ISO, a instalação e as configurações de vídeo, jogo e controles.
-- **Resolução interna** de 480p (a do Xbox) a 4K, **anti-aliasing** FXAA ou SSAA e **V-Sync**.
-- **Widescreen** 16:9 e 21:9, além do 4:3 original.
-- **Tela cheia** sem bordas ou janela; F11 alterna durante o jogo.
-- **Configurações de vídeo dentro do jogo**, em Options > Video (RB no controle ou V no teclado).
-- **Controles** de Xbox e PlayStation (DualShock 4 e DualSense), com troca de botões, e teclado.
-- **Mouse nos menus**: no menu principal e na seleção de lutadores, o item embaixo do ponteiro é selecionado.
-- **2 jogadores locais**; com um controle só, o teclado pode ser o jogador 1.
-- **Texturas HD** com os dois pacotes da comunidade.
-- **Pular os vídeos de abertura**.
-- **Sessão com tudo desbloqueado**, numa cópia dos saves: nada dela vai para o seu perfil.
-- **Adicionar à Steam** como jogo não-Steam (feche a Steam antes).
+- **Launcher** in English or Brazilian Portuguese, with the ISO choice, the installation and the video, game
+  and controller settings.
+- **Internal resolution** from 480p (the Xbox's) to 4K, **anti-aliasing** FXAA or SSAA, and **V-Sync**.
+- **Widescreen** 16:9 and 21:9, besides the original 4:3.
+- **Borderless fullscreen** or window; F11 switches during the game.
+- **Video settings inside the game**, in Options > Video (RB on the controller or V on the keyboard).
+- **Xbox and PlayStation controllers** (DualShock 4 and DualSense), with button remapping, and keyboard.
+- **Mouse in the menus**: in the main menu and the character select, the item under the pointer is selected.
+- **Local 2 players**; with a single controller, the keyboard can be player 1.
+- **HD textures** with the two community packs.
+- **Skip the intro movies**.
+- **Everything unlocked session**, on a copy of the saves: nothing of it reaches your profile.
+- **Add to Steam** as a non-Steam game (close Steam first).
 
-## Texturas HD
+## HD textures
 
-O jogo usa os dois pacotes de texturas HD feitos pela comunidade para a versão de PS2 no PCSX2. Eles não vêm
-junto: baixe-os das páginas dos autores. Os dois juntos dão o melhor resultado.
+The game uses the two HD texture packs the community made for the PS2 version in PCSX2. They are not
+included: download them from their authors' pages. Both together give the best result.
 
-1. No launcher, **Baixar pacote HD (PS2)** abre a página de
+1. In the launcher, **Get HD pack (PS2)** opens
    [Mortal-Kombat-Armageddon-HD-Textures](https://github.com/ckiscxrsed/Mortal-Kombat-Armageddon-HD-Textures/releases)
-   (`SLUS-21410.rar`; as versões mais novas estão no Google Drive indicado lá), e **Baixar remake HD** abre a de
+   (`SLUS-21410.rar`; the newer versions are on the Google Drive linked there), and **Get HD remake** opens
    [Mortal-Kombat-Armageddon-PCSX2-Remaster-Remake-Arts-and-Menus](https://github.com/UstanakChaos/Mortal-Kombat-Armageddon-PCSX2-Remaster-Remake-Arts-and-Menus/releases)
    (`MK.Armageddon.Remake.zip`).
-2. **Abrir a pasta** cria e abre `hd-textures`, ao lado de `mka`.
-3. Extraia os downloads ali, do jeito que vieram: o layout do PCSX2 (`SLUS-21410\replacements\...`) e o do
-   remake (`MK Armageddon Remake\SLUS-21543\...`) servem como estão. O remake é usado primeiro e o pacote de
-   PS2 completa o resto.
-4. Reabra o launcher e ligue **Texturas HD**.
+2. **Open folder** creates and opens `hd-textures`, beside `mka`.
+3. Extract the downloads there as they came: the PCSX2 layout (`SLUS-21410\replacements\...`) and the
+   remake's (`MK Armageddon Remake\SLUS-21543\...`) work as they are. The remake is used first and the PS2
+   pack fills in the rest.
+4. Open the launcher again and turn on **HD textures**.
 
-O jogo reconhece cada textura pela aparência (as do PS2 têm outros nomes) e guarda o que aprendeu num arquivo
-de índice na pasta do pacote; o primeiro início com um pacote novo demora mais. As pastas opcionais dos
-pacotes (`Optional Replacements`, `Bonus Test`) e as que começam com `_` ficam de fora.
+The game recognises each texture by how it looks (the PS2's have other names) and keeps what it learned in an
+index file in the pack's folder; the first start with a new pack takes longer. The packs' optional folders
+(`Optional Replacements`, `Bonus Test`) and the ones starting with `_` are left out.
 
-## Problemas conhecidos
+## Known issues
 
-- **Áudio:** há relatos de estalos no som; nos testes a saída de áudio não teve cortes. Raramente o som não
-  inicia; feche e abra o jogo de novo.
-- **Widescreen:** a câmera abre corretamente, mas os menus e o HUD em 2D ficam esticados.
-- **Konquest:** o começo funciona; a história completa ainda não foi testada até o fim.
-- Algum problema gráfico pode aparecer: [abra uma issue](https://github.com/0diax/diax-mkarmageddon/issues)
-  com uma captura de tela e o arquivo `mka\stderr.txt`.
+- **Audio:** crackles in the sound have been reported; in testing the audio output had no dropouts. Rarely
+  the sound does not start; close the game and open it again.
+- **Widescreen:** the camera opens up correctly, but the 2D menus and HUD are stretched.
+- **Konquest:** the start works; the full story has not been tested to the end.
+- A graphics problem may still show up: [open an issue](https://github.com/0diax/diax-mkarmageddon/issues)
+  with a screenshot and the `mka\stderr.txt` file.
 
 ## FAQ
 
-### O launcher diz que o meu disco não é a versão suportada
+### The launcher says my disc is not the supported release
 
-Use a ISO original do **Xbox original, NTSC-U (EUA)**. Versões de outras regiões, a do PS2 e imagens
-convertidas não são aceitas: o instalador confere o `default.xbe` do disco.
+Use the original **Xbox, NTSC-U (USA)** ISO. Other regions, the PS2 version and converted images are not
+accepted: the installer checks the disc's `default.xbe`.
 
-### Onde ficam os saves, as configurações e os registros?
+### Where are my saves, settings and logs?
 
-| O quê | Onde |
+| What | Where |
 |---|---|
-| Saves e perfis | `mka\save` |
-| Configurações de vídeo | `mka\video.ini` |
-| Configurações do launcher | `mka\launcher.ini` |
-| Registro do jogo | `mka\stderr.txt` |
-| Registro da instalação | `install.log`, na pasta do ZIP |
+| Saves and profiles | `mka\save` |
+| Video settings | `mka\video.ini` |
+| Launcher settings and language | `mka\launcher.ini` (`language=en` or `language=pt-BR`) |
+| Game log | `mka\stderr.txt` |
+| Installation log | `install.log`, in the ZIP's folder |
 
-### Konquest, Krypt e Kreate a Fighter pedem um perfil
+### Konquest, Krypt and Kreate a Fighter ask for a profile
 
-No menu principal, aperte **L / L2 (ENTER PROFILE KODE)** e digite o kode do seu perfil, ou crie um em
+In the main menu, press **L / L2 (ENTER PROFILE KODE)** and enter your profile's kode, or create one in
 **PROFILES**.
 
-### Quais são os controles do teclado?
+### What are the keyboard controls?
 
-| Ação | Tecla | Botão do controle |
+| Action | Key | Controller button |
 |---|---|---|
-| Andar | W A S D ou setas | Direcional |
-| Soco | J | X / Quadrado |
-| Gancho | U | Y / Triângulo |
-| Chute | K | A / Cruz |
-| Arremesso | I | B / Círculo |
-| Defesa | L ou Espaço | RT / R2 |
-| Estilo de luta | O | LT / L2 |
-| Arma | N | RB / R1 |
-| Agarrão | H | LB / L1 |
-| Pausa | Esc | Start / Options |
-| Voltar | Tab | Back / Share |
-| Tela cheia | F11 | |
-| Acelerar (Motor Kombat) | Espaço | |
+| Move | W A S D or arrows | D-pad |
+| Punch | J | X / Square |
+| Uppercut | U | Y / Triangle |
+| Kick | K | A / Cross |
+| Throw | I | B / Circle |
+| Block | L or Space | RT / R2 |
+| Fighting style | O | LT / L2 |
+| Weapon | N | RB / R1 |
+| Grab | H | LB / L1 |
+| Pause | Esc | Start / Options |
+| Back | Tab | Back / Share |
+| Fullscreen | F11 | |
+| Accelerate (Motor Kombat) | Space | |
 
-Os botões do controle podem ser trocados no launcher, em **Configurar botões do controle**.
+The controller buttons can be remapped in the launcher, in **Controller buttons**.
 
-### Como jogar em dois?
+### How do two people play?
 
-Ligue dois controles: o segundo jogador entra apertando Start, como no console. Com um controle só, escolha
-**Jogador 1 usa: Só teclado** no launcher para o teclado ser o jogador 1 e o controle o jogador 2.
+Connect two controllers: the second player joins by pressing Start, as on the console. With a single
+controller, choose **Player 1 uses: Keyboard only** in the launcher so the keyboard is player 1 and the
+controller player 2.
 
-### Como melhorar o desempenho?
+### How can I improve performance?
 
-Diminua a **Resolução interna** e use **FXAA** em vez de **SSAA** no launcher.
+Lower the **Internal resolution** and use **FXAA** instead of **SSAA** in the launcher.
 
-## Compilação
+## Building
 
-Também dá para clonar o repositório e rodar **`Instalar MK Armageddon.cmd`**, que pede a ISO e faz o mesmo
-que o launcher. `scripts\build-starter.ps1` monta o ZIP da release.
+You can also clone the repository and run **`Install MK Armageddon.cmd`**, which asks for the ISO and does
+the same as the launcher. `scripts\build-starter.ps1` makes the release ZIP.
 
-| Pasta | Conteúdo |
+| Folder | Contents |
 |---|---|
-| `mka/src` | código escrito à mão: `main.c`, substituições de funções do jogo (`recomp_manual.c`), corrotinas (`mka_process.c`) |
-| `mka/launcher` | o launcher (C, Win32) |
-| `tools_mka` | `disc.py` (lê a ISO), `generate.py` (gera o código), sementes de funções e ferramentas de análise |
-| `scripts` | `install.ps1` (instalação e compilação), `build-starter.ps1` (o ZIP da release) |
-| `xboxrecomp` | runtime e recompilador estático de Xbox, com as mudanças deste projeto (licença MIT) |
-| `third_party/dsp56300` | emulador do DSP de áudio do Xbox (licença MIT) |
+| `mka/src` | hand-written code: `main.c`, replacements of game functions (`recomp_manual.c`), coroutines (`mka_process.c`) |
+| `mka/launcher` | the launcher (C, Win32) |
+| `tools_mka` | `disc.py` (reads the ISO), `generate.py` (generates the code), function seeds and analysis tools |
+| `scripts` | `install.ps1` (installation and build), `build-starter.ps1` (the release ZIP) |
+| `xboxrecomp` | the Xbox static recompiler and runtime, with this project's changes (MIT license) |
+| `third_party/dsp56300` | the Xbox audio DSP emulator (MIT license) |
 
-Gerado no seu PC e nunca versionado: `mka/game` (o disco), `mka/src/recomp/gen` (o código do jogo),
-`mka/build`, `hd-textures` (baixadas das páginas dos autores) e os saves (`mka/save*`).
+Generated on your PC and never versioned: `mka/game` (the disc), `mka/src/recomp/gen` (the game's code),
+`mka/build`, `hd-textures` (downloaded from their authors' pages) and the saves (`mka/save*`).
 
-## Créditos
+## Credits
 
-Este projeto só existe graças ao trabalho destas pessoas e projetos:
+This project exists thanks to the work of these people and projects:
 
-- **[xboxrecomp](https://github.com/portingpete/xboxrecomp)**, de **sp00nz** e **portingpete**: o runtime e o
-  recompilador estático de Xbox sobre os quais tudo aqui roda (licença MIT).
-- **[Black 2006 Recomp](https://github.com/portingpete/Black-2006-Recomp)**, de **portingpete**: o modelo de
-  instalação (o jogador traz o próprio disco e o jogo é gerado no PC dele) e o runtime de que este projeto partiu.
-- **[coop-anything](https://github.com/cranebeaker/coop-anything)**, de **cranebeaker**: a referência estudada
-  para um modo online, que não faz parte desta versão.
-- **[OpenShao](https://github.com/OAleex/OpenShao)**, de **OAleex**: a inspiração para esta página.
-- **[dsp56300](https://github.com/mborgerson/dsp56300)**, de **Matt Borgerson**: a emulação do DSP de áudio do Xbox.
-- **[Capstone](https://www.capstone-engine.org/)**: o desmontador usado na recompilação.
-- **Texturas HD**:
+- **[xboxrecomp](https://github.com/portingpete/xboxrecomp)**, by **sp00nz** and **portingpete**: the Xbox
+  static recompiler and runtime everything here runs on (MIT license).
+- **[Black 2006 Recomp](https://github.com/portingpete/Black-2006-Recomp)**, by **portingpete**: the install
+  model (the player brings their own disc and the game is generated on their PC) and the runtime this project
+  started from.
+- **[coop-anything](https://github.com/cranebeaker/coop-anything)**, by **cranebeaker**: the reference studied
+  for an online mode, which is not part of this version.
+- **[OpenShao](https://github.com/OAleex/OpenShao)**, by **OAleex**: the inspiration for this page.
+- **[dsp56300](https://github.com/mborgerson/dsp56300)**, by **Matt Borgerson**: the Xbox audio DSP emulation.
+- **[Capstone](https://www.capstone-engine.org/)**: the disassembler the recompilation uses.
+- **HD textures**:
   - **[Mortal Kombat Armageddon PCSX2 Remaster/Remake: Arts and Menus](https://github.com/UstanakChaos/Mortal-Kombat-Armageddon-PCSX2-Remaster-Remake-Arts-and-Menus)**
-    (artes, menus e personagens), de **UstanakChaos**, com a ajuda de **@Mikachuuu_** em muitos personagens;
+    (arts, menus and characters), by **UstanakChaos**, with the help of **@Mikachuuu_** on many characters;
   - **[Mortal Kombat Armageddon HD Texture Pack](https://github.com/ckiscxrsed/Mortal-Kombat-Armageddon-HD-Textures)**
-    (upscale da versão de PS2), de **ckiscxrsed**.
+    (upscale of the PS2 version), by **ckiscxrsed**.
 
-  Todo o crédito das texturas é dos seus autores. Elas não vêm com este projeto: baixe-as das páginas deles.
+  All the credit for the textures goes to their authors. They do not come with this project: download them from
+  their pages.
 
-Este projeto **não tem nenhum fim lucrativo**: não é vendido, não aceita doações e não é distribuído com
-fins comerciais. O código próprio deste projeto está sob a [licença MIT](LICENSE).
+This project is **non-profit**: it is not sold, takes no donations and is not distributed for commercial
+purposes. This project's own code is under the [MIT license](LICENSE).
 
-Mortal Kombat é marca registrada da Warner Bros. Entertainment Inc. Mortal Kombat: Armageddon foi
-desenvolvido pela Midway. Este é um projeto de fã, sem afiliação com a Warner Bros. ou a Midway, e não
-contém nenhum conteúdo do jogo. Use somente com uma cópia original que você possui.
+Mortal Kombat is a registered trademark of Warner Bros. Entertainment Inc. Mortal Kombat: Armageddon was
+developed by Midway. This is a fan project, not affiliated with Warner Bros. or Midway, and it contains no
+content from the game. Use it only with an original copy you own.

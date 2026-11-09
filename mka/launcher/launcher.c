@@ -22,15 +22,20 @@
 #include <wchar.h>
 
 enum {
-    ID_DISC = 100, ID_CHOOSE, ID_INSTALL, ID_RES, ID_ASPECT, ID_MODE, ID_WIN, ID_AA, ID_VSYNC, ID_HD, ID_HD_FOLDER,
+    ID_LANG = 90, ID_DISC = 100, ID_CHOOSE, ID_INSTALL, ID_RES, ID_ASPECT, ID_MODE, ID_WIN, ID_AA, ID_VSYNC, ID_HD, ID_HD_FOLDER,
     ID_HD_PS2, ID_HD_REMAKE, ID_INTROS, ID_UNLOCK, ID_PLAYERS, ID_P1, ID_PADMAP, ID_STEAM, ID_PLAY, ID_CLOSE
 };
 /* the controls window's: one list a game button, then its buttons */
 enum { ID_MAP0 = 300, ID_MAP_OK = 340, ID_MAP_CANCEL, ID_MAP_RESET };
 
 static const unsigned k_heights[] = { 480, 720, 1080, 1440, 2160 };
-static const wchar_t *const k_height_names[] = { L"480p (original do Xbox)", L"720p", L"1080p",
-                                                 L"1440p (recomendado)", L"2160p (4K)" };
+/* The launcher's language: English, or Brazilian Portuguese (launcher.ini language=pt-BR). Every text is a pair. */
+static int s_lang;
+#define TR(en, pt) (s_lang ? (pt) : (en))
+
+static const wchar_t *const k_height_names[2][5] = {
+    { L"480p (original Xbox)", L"720p", L"1080p", L"1440p (recommended)", L"2160p (4K)" },
+    { L"480p (original do Xbox)", L"720p", L"1080p", L"1440p (recomendado)", L"2160p (4K)" } };
 /* Window heights; the width follows the aspect. */
 static const unsigned k_win_h[] = { 720, 960, 1080, 1440 };
 /* video.ini's aspect: "original" is the game's 4:3; a wider one also widens the game's camera (recomp_manual.c). */
@@ -38,7 +43,8 @@ static const char *const k_aspect[] = { "original", "16:9", "21:9" };
 static const unsigned k_aspect_n[] = { 4, 16, 21 }, k_aspect_d[] = { 3, 9, 9 };
 static const wchar_t *const k_aspect_names[] = { L"4:3 (original)", L"16:9 (widescreen)", L"21:9 (ultrawide)" };
 static const char *const k_aa[] = { "off", "fxaa", "ssaa" };
-static const wchar_t *const k_aa_names[] = { L"Desligado", L"FXAA (leve)", L"SSAA (pesado)" };
+static const wchar_t *const k_aa_names[2][3] = { { L"Off", L"FXAA (light)", L"SSAA (heavy)" },
+                                                { L"Desligado", L"FXAA (leve)", L"SSAA (pesado)" } };
 
 /* Where the HD packs are downloaded from: their authors' pages. */
 static const wchar_t *const k_ps2_pack_url = L"https://github.com/ckiscxrsed/Mortal-Kombat-Armageddon-HD-Textures/releases";
@@ -48,14 +54,17 @@ static const wchar_t *const k_remake_url =
 /* RECOMP_PAD_MAP's names (xinput_device.c), and what they are on either kind of controller */
 #define PAD_BUTTONS 12
 static const char *const k_pad[PAD_BUTTONS] = { "A", "B", "X", "Y", "LB", "RB", "LT", "RT", "START", "BACK", "L3", "R3" };
-static const wchar_t *const k_pad_names[PAD_BUTTONS] = {
-    L"A  /  Cruz", L"B  /  Círculo", L"X  /  Quadrado", L"Y  /  Triângulo", L"LB  /  L1", L"RB  /  R1",
-    L"LT  /  L2", L"RT  /  R2", L"Start  /  Options", L"Back  /  Share", L"L3 (analógico esq.)", L"R3 (analógico dir.)"
+static const wchar_t *const k_pad_names[2][PAD_BUTTONS] = {
+    { L"A  /  Cross", L"B  /  Circle", L"X  /  Square", L"Y  /  Triangle", L"LB  /  L1", L"RB  /  R1",
+      L"LT  /  L2", L"RT  /  R2", L"Start  /  Options", L"Back  /  Share", L"L3 (left stick)", L"R3 (right stick)" },
+    { L"A  /  Cruz", L"B  /  Círculo", L"X  /  Quadrado", L"Y  /  Triângulo", L"LB  /  L1", L"RB  /  R1",
+      L"LT  /  L2", L"RT  /  R2", L"Start  /  Options", L"Back  /  Share", L"L3 (analógico esq.)", L"R3 (analógico dir.)" }
 };
 /* what each does in a fight (the game's own layout) */
-static const wchar_t *const k_pad_actions[PAD_BUTTONS] = {
-    L"chute", L"arremesso", L"soco", L"gancho", L"agarrão", L"arma", L"estilo", L"defesa", L"pausa", L"voltar",
-    L"", L""
+static const wchar_t *const k_pad_actions[2][PAD_BUTTONS] = {
+    { L"kick", L"throw", L"punch", L"uppercut", L"grab", L"weapon", L"style", L"block", L"pause", L"back", L"", L"" },
+    { L"chute", L"arremesso", L"soco", L"gancho", L"agarrão", L"arma", L"estilo", L"defesa", L"pausa", L"voltar",
+      L"", L"" }
 };
 static int s_map[PAD_BUTTONS];             /* game button -> the physical one doing it */
 static HWND s_map_wnd;
@@ -219,9 +228,10 @@ static void show_disc(void)
     wchar_t text[2 * MAX_PATH], xbe[MAX_PATH], built[MAX_PATH];
     path_in_dir(xbe, L"game\\default.xbe");
     path_in_dir(built, L"build\\Release\\mka_recomp.exe");
-    swprintf(text, 2 * MAX_PATH, L"%s\n%s", *s_disc ? s_disc : L"Nenhuma ISO escolhida.",
-             exists(built) ? L"Instalado: pronto para jogar." : exists(xbe) ? L"Disco copiado: falta compilar."
-                                                                          : L"Escolha a sua ISO e depois instale.");
+    swprintf(text, 2 * MAX_PATH, L"%s\n%s", *s_disc ? s_disc : TR(L"No ISO chosen.", L"Nenhuma ISO escolhida."),
+             exists(built) ? TR(L"Installed: ready to play.", L"Instalado: pronto para jogar.")
+             : exists(xbe) ? TR(L"Disc copied: not compiled yet.", L"Disco copiado: falta compilar.")
+                           : TR(L"Choose your ISO, then install.", L"Escolha a sua ISO e depois instale."));
     SetWindowTextW(s_ctl[ID_DISC], text);
 }
 
@@ -311,32 +321,35 @@ static void map_open(HWND owner)
         registered = 1;
     }
     AdjustWindowRect(&r, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU, FALSE);
-    w = CreateWindowW(L"MkaPadMap", L"Botões do controle", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+    w = CreateWindowW(L"MkaPadMap", TR(L"Controller buttons", L"Botões do controle"), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
                       CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left, r.bottom - r.top, owner, NULL,
                       GetModuleHandleW(NULL), NULL);
     s_map_wnd = w;
     c = CreateWindowExW(0, L"STATIC",
-                        L"Para cada botão que o jogo usa, escolha o botão do seu controle que faz a função.\n"
-                        L"Vale para controles de Xbox e de PlayStation (DualShock 4 e DualSense).",
+                        TR(L"For each button the game uses, choose the button of your controller that does it.\n"
+                           L"It works for Xbox and PlayStation controllers (DualShock 4 and DualSense).",
+                           L"Para cada botão que o jogo usa, escolha o botão do seu controle que faz a função.\n"
+                           L"Vale para controles de Xbox e de PlayStation (DualShock 4 e DualSense)."),
                         WS_CHILD | WS_VISIBLE, 12, y, 410, 40, w, NULL, GetModuleHandleW(NULL), NULL);
     SendMessageW(c, WM_SETFONT, (WPARAM)s_font, TRUE);
     y += 50;
     for (i = 0; i < PAD_BUTTONS; i++, y += 30) {
         wchar_t label[64];
-        swprintf(label, 64, *k_pad_actions[i] ? L"%s (%s)" : L"%s%s", k_pad_names[i], k_pad_actions[i]);
+        swprintf(label, 64, *k_pad_actions[s_lang][i] ? L"%s (%s)" : L"%s%s", k_pad_names[s_lang][i], k_pad_actions[s_lang][i]);
         c = CreateWindowExW(0, L"STATIC", label, WS_CHILD | WS_VISIBLE, 12, y + 4, 200, 20, w, NULL,
                             GetModuleHandleW(NULL), NULL);
         SendMessageW(c, WM_SETFONT, (WPARAM)s_font, TRUE);
         c = CreateWindowExW(0, L"COMBOBOX", L"", WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL,
                             220, y, 198, 300, w, (HMENU)(INT_PTR)(ID_MAP0 + i), GetModuleHandleW(NULL), NULL);
         SendMessageW(c, WM_SETFONT, (WPARAM)s_font, TRUE);
-        for (j = 0; j < PAD_BUTTONS; j++) SendMessageW(c, CB_ADDSTRING, 0, (LPARAM)k_pad_names[j]);
+        for (j = 0; j < PAD_BUTTONS; j++) SendMessageW(c, CB_ADDSTRING, 0, (LPARAM)k_pad_names[s_lang][j]);
         SendMessageW(c, CB_SETCURSEL, s_map[i], 0);
     }
     y += 10;
     {
-        static const struct { const wchar_t *text; int id, x; } b[] = {
-            { L"Padrão", ID_MAP_RESET, 12 }, { L"OK", ID_MAP_OK, 226 }, { L"Cancelar", ID_MAP_CANCEL, 326 }
+        const struct { const wchar_t *text; int id, x; } b[] = {
+            { TR(L"Default", L"Padrão"), ID_MAP_RESET, 12 }, { L"OK", ID_MAP_OK, 226 },
+            { TR(L"Cancel", L"Cancelar"), ID_MAP_CANCEL, 326 }
         };
         for (i = 0; i < 3; i++) {
             c = CreateWindowExW(0, L"BUTTON", b[i].text, WS_CHILD | WS_VISIBLE | WS_TABSTOP |
@@ -379,9 +392,11 @@ static int copy_saves(const wchar_t *from, const wchar_t *to)
 
 static void build(HWND w)
 {
-    const wchar_t *modes[] = { L"Janela", L"Tela cheia (sem bordas)" };
-    const wchar_t *players[] = { L"1 jogador", L"2 jogadores (local)" };
-    const wchar_t *p1[] = { L"Teclado + controle 1", L"Só teclado (controle 1 = jogador 2)" };
+    const wchar_t *modes[] = { TR(L"Window", L"Janela"), TR(L"Fullscreen (borderless)", L"Tela cheia (sem bordas)") };
+    const wchar_t *players[] = { TR(L"1 player", L"1 jogador"), TR(L"2 players (local)", L"2 jogadores (local)") };
+    const wchar_t *p1[] = { TR(L"Keyboard + controller 1", L"Teclado + controle 1"),
+                            TR(L"Keyboard only (controller 1 = player 2)", L"Só teclado (controle 1 = jogador 2)") };
+    const wchar_t *langs[] = { L"English", L"Português (Brasil)" };
     unsigned h = (unsigned)atoi(ini_get("internal_height", "1440")), wh = (unsigned)atoi(ini_get("window_height", "960"));
     int i, res = 3, win = 1, aa = 1, aspect = 0, y = 16;
     const int has_pack = *s_pack != 0;
@@ -392,24 +407,26 @@ static void build(HWND w)
     for (i = 0; i < 3; i++) if (!_stricmp(ini_get("aspect", "original"), k_aspect[i])) aspect = i;
     for (i = 0; i < 3; i++) if (!_stricmp(ini_get("aa", "fxaa"), k_aa[i])) aa = i;
 
-    add(w, L"BUTTON", L"Disco", BS_GROUPBOX, 8, y - 8, 494, 104, 0);
+    combo(w, L"Language / Idioma", y, ID_LANG, langs, 2, s_lang);
+    y += 40;
+    add(w, L"BUTTON", TR(L"Disc", L"Disco"), BS_GROUPBOX, 8, y - 8, 494, 104, 0);
     y += 14;
     add(w, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 20, y, 470, 36, ID_DISC);
     y += 40;
-    add(w, L"BUTTON", L"Escolher a ISO...", BS_PUSHBUTTON | WS_TABSTOP, 20, y, 150, 28, ID_CHOOSE);
-    add(w, L"BUTTON", L"Instalar e compilar", BS_PUSHBUTTON | WS_TABSTOP, 180, y, 150, 28, ID_INSTALL);
+    add(w, L"BUTTON", TR(L"Choose ISO...", L"Escolher a ISO..."), BS_PUSHBUTTON | WS_TABSTOP, 20, y, 150, 28, ID_CHOOSE);
+    add(w, L"BUTTON", TR(L"Install and compile", L"Instalar e compilar"), BS_PUSHBUTTON | WS_TABSTOP, 180, y, 150, 28, ID_INSTALL);
     y += 50;
 
-    add(w, L"BUTTON", L"Vídeo", BS_GROUPBOX, 8, y - 8, 494, 210, 0);
+    add(w, L"BUTTON", TR(L"Video", L"Vídeo"), BS_GROUPBOX, 8, y - 8, 494, 210, 0);
     y += 14;
-    combo(w, L"Resolução interna", y, ID_RES, k_height_names, 5, res); y += 32;
-    combo(w, L"Proporção da tela", y, ID_ASPECT, k_aspect_names, 3, aspect); y += 32;
-    combo(w, L"Modo de exibição", y, ID_MODE, modes, 2, !_stricmp(ini_get("window_mode", "windowed"), "borderless"));
+    combo(w, TR(L"Internal resolution", L"Resolução interna"), y, ID_RES, k_height_names[s_lang], 5, res); y += 32;
+    combo(w, TR(L"Aspect ratio", L"Proporção da tela"), y, ID_ASPECT, k_aspect_names, 3, aspect); y += 32;
+    combo(w, TR(L"Display mode", L"Modo de exibição"), y, ID_MODE, modes, 2, !_stricmp(ini_get("window_mode", "windowed"), "borderless"));
     y += 32;
-    combo(w, L"Tamanho da janela", y, ID_WIN, NULL, 0, 0); y += 32;
+    combo(w, TR(L"Window size", L"Tamanho da janela"), y, ID_WIN, NULL, 0, 0); y += 32;
     fill_win(win);
-    combo(w, L"Anti-aliasing", y, ID_AA, k_aa_names, 3, aa); y += 32;
-    add(w, L"BUTTON", L"V-Sync (sem cortes na imagem)", BS_AUTOCHECKBOX | WS_TABSTOP, 200, y, 290, 20, ID_VSYNC);
+    combo(w, L"Anti-aliasing", y, ID_AA, k_aa_names[s_lang], 3, aa); y += 32;
+    add(w, L"BUTTON", TR(L"V-Sync (no tearing)", L"V-Sync (sem cortes na imagem)"), BS_AUTOCHECKBOX | WS_TABSTOP, 200, y, 290, 20, ID_VSYNC);
     SendMessageW(s_ctl[ID_VSYNC], BM_SETCHECK, atoi(ini_get("vsync", "1")) ? BST_CHECKED : BST_UNCHECKED, 0);
     y += 42;
 
@@ -419,43 +436,50 @@ static void build(HWND w)
         MultiByteToWideChar(CP_UTF8, 0, d, -1, s_disc, MAX_PATH);
     }
     show_disc();
-    add(w, L"BUTTON", L"Jogo", BS_GROUPBOX, 8, y - 8, 494, 314, 0);
+    add(w, L"BUTTON", TR(L"Game", L"Jogo"), BS_GROUPBOX, 8, y - 8, 494, 314, 0);
     y += 14;
-    swprintf(hd_label, 160, L"Texturas HD (%s)",
-             !has_pack ? L"nenhum pacote em hd-textures: baixe pelos botões abaixo"
-             : *s_remake ? L"remake de artes e menus + pacote da versão de PS2" : L"pacote da versão de PS2");
+    swprintf(hd_label, 160, TR(L"HD textures (%s)", L"Texturas HD (%s)"),
+             !has_pack ? TR(L"no pack in hd-textures: download them with the buttons below",
+                            L"nenhum pacote em hd-textures: baixe pelos botões abaixo")
+             : *s_remake ? TR(L"arts and menus remake + PS2 version pack", L"remake de artes e menus + pacote da versão de PS2")
+                         : TR(L"PS2 version pack", L"pacote da versão de PS2"));
     add(w, L"BUTTON", hd_label, BS_AUTOCHECKBOX | WS_TABSTOP, 20, y, 470, 20, ID_HD);
     SendMessageW(s_ctl[ID_HD], BM_SETCHECK, has_pack && atoi(ini_get("hd_textures", "1")) ? BST_CHECKED : BST_UNCHECKED, 0);
     EnableWindow(s_ctl[ID_HD], has_pack);
     y += 26;
-    add(w, L"BUTTON", L"Abrir a pasta", BS_PUSHBUTTON | WS_TABSTOP, 20, y, 150, 26, ID_HD_FOLDER);
-    add(w, L"BUTTON", L"Baixar pacote HD (PS2)", BS_PUSHBUTTON | WS_TABSTOP, 180, y, 150, 26, ID_HD_PS2);
-    add(w, L"BUTTON", L"Baixar remake HD", BS_PUSHBUTTON | WS_TABSTOP, 340, y, 150, 26, ID_HD_REMAKE);
+    add(w, L"BUTTON", TR(L"Open folder", L"Abrir a pasta"), BS_PUSHBUTTON | WS_TABSTOP, 20, y, 150, 26, ID_HD_FOLDER);
+    add(w, L"BUTTON", TR(L"Get HD pack (PS2)", L"Baixar pacote HD (PS2)"), BS_PUSHBUTTON | WS_TABSTOP, 180, y, 150, 26, ID_HD_PS2);
+    add(w, L"BUTTON", TR(L"Get HD remake", L"Baixar remake HD"), BS_PUSHBUTTON | WS_TABSTOP, 340, y, 150, 26, ID_HD_REMAKE);
     y += 36;
-    add(w, L"BUTTON", L"Pular vídeos de abertura", BS_AUTOCHECKBOX | WS_TABSTOP, 20, y, 470, 20, ID_INTROS);
+    add(w, L"BUTTON", TR(L"Skip intro movies", L"Pular vídeos de abertura"), BS_AUTOCHECKBOX | WS_TABSTOP, 20, y, 470, 20, ID_INTROS);
     SendMessageW(s_ctl[ID_INTROS], BM_SETCHECK, atoi(ini_get("skip_intros", "1")) ? BST_CHECKED : BST_UNCHECKED, 0);
     y += 26;
-    add(w, L"BUTTON", L"Desbloquear tudo (sessão de teste: nada dela é salvo no seu perfil)",
+    add(w, L"BUTTON", TR(L"Unlock everything (test session: nothing of it is saved to your profile)",
+                          L"Desbloquear tudo (sessão de teste: nada dela é salvo no seu perfil)"),
         BS_AUTOCHECKBOX | WS_TABSTOP, 20, y, 470, 20, ID_UNLOCK);
     SendMessageW(s_ctl[ID_UNLOCK], BM_SETCHECK, atoi(ini_get("unlock_all", "0")) ? BST_CHECKED : BST_UNCHECKED, 0);
     y += 30;
-    combo(w, L"Jogadores", y, ID_PLAYERS, players, 2, atoi(ini_get("players", "2")) == 1 ? 0 : 1); y += 32;
-    combo(w, L"Jogador 1 usa", y, ID_P1, p1, 2, atoi(ini_get("p1_keyboard_only", "0")) ? 1 : 0); y += 32;
-    add(w, L"BUTTON", L"Configurar botões do controle (Xbox, DualShock 4, DualSense)...",
+    combo(w, TR(L"Players", L"Jogadores"), y, ID_PLAYERS, players, 2, atoi(ini_get("players", "2")) == 1 ? 0 : 1); y += 32;
+    combo(w, TR(L"Player 1 uses", L"Jogador 1 usa"), y, ID_P1, p1, 2, atoi(ini_get("p1_keyboard_only", "0")) ? 1 : 0); y += 32;
+    add(w, L"BUTTON", TR(L"Controller buttons (Xbox, DualShock 4, DualSense)...",
+                          L"Configurar botões do controle (Xbox, DualShock 4, DualSense)..."),
         BS_PUSHBUTTON | WS_TABSTOP, 20, y, 470, 26, ID_PADMAP);
     map_load();
     y += 32;
-    add(w, L"BUTTON", L"Adicionar à Steam (como jogo não-Steam; feche a Steam antes)",
+    add(w, L"BUTTON", TR(L"Add to Steam (as a non-Steam game; close Steam first)",
+                          L"Adicionar à Steam (como jogo não-Steam; feche a Steam antes)"),
         BS_PUSHBUTTON | WS_TABSTOP, 20, y, 470, 26, ID_STEAM);
     y += 44;
 
     add(w, L"STATIC",
-        L"Teclado: WASD/setas andar, J soco, U gancho, K chute, I arremesso, L/Espaço defesa,\n"
-        L"O estilo, N arma, H agarrão, Esc pausa, Tab voltar, F11 tela cheia. Motor Kombat: Espaço acelera.",
+        TR(L"Keyboard: WASD/arrows move, J punch, U uppercut, K kick, I throw, L/Space block,\n"
+           L"O style, N weapon, H grab, Esc pause, Tab back, F11 fullscreen. Motor Kombat: Space accelerates.",
+           L"Teclado: WASD/setas andar, J soco, U gancho, K chute, I arremesso, L/Espaço defesa,\n"
+           L"O estilo, N arma, H agarrão, Esc pausa, Tab voltar, F11 tela cheia. Motor Kombat: Espaço acelera."),
         0, 12, y, 490, 52, 0);
     y += 60;
-    add(w, L"BUTTON", L"Jogar", BS_DEFPUSHBUTTON | WS_TABSTOP, 282, y, 104, 30, ID_PLAY);
-    add(w, L"BUTTON", L"Fechar", BS_PUSHBUTTON | WS_TABSTOP, 396, y, 104, 30, ID_CLOSE);
+    add(w, L"BUTTON", TR(L"Play", L"Jogar"), BS_DEFPUSHBUTTON | WS_TABSTOP, 282, y, 104, 30, ID_PLAY);
+    add(w, L"BUTTON", TR(L"Close", L"Fechar"), BS_PUSHBUTTON | WS_TABSTOP, 396, y, 104, 30, ID_CLOSE);
 }
 
 /* ---- the disc: the player's own ISO, installed by scripts\install.ps1 ---------------------------------------- */
@@ -474,10 +498,12 @@ static void choose_disc(HWND w)
     wchar_t file[MAX_PATH] = L"", *slash;
     OPENFILENAMEW ofn = { sizeof(ofn) };
     ofn.hwndOwner = w;
-    ofn.lpstrFilter = L"Disco do Xbox (*.iso, *.xiso, default.xbe)\0*.iso;*.xiso;default.xbe\0Todos os arquivos\0*.*\0";
+    ofn.lpstrFilter = TR(L"Xbox disc (*.iso, *.xiso, default.xbe)\0*.iso;*.xiso;default.xbe\0All files\0*.*\0",
+                         L"Disco do Xbox (*.iso, *.xiso, default.xbe)\0*.iso;*.xiso;default.xbe\0Todos os arquivos\0*.*\0");
     ofn.lpstrFile = file;
     ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrTitle = L"A sua ISO do Mortal Kombat: Armageddon (Xbox original, NTSC-U)";
+    ofn.lpstrTitle = TR(L"Your Mortal Kombat: Armageddon ISO (original Xbox, NTSC-U)",
+                        L"A sua ISO do Mortal Kombat: Armageddon (Xbox original, NTSC-U)");
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
     if (!GetOpenFileNameW(&ofn)) return;
     /* the default.xbe of an extracted disc stands for its folder */
@@ -497,19 +523,21 @@ static void install_game(HWND w)
     swprintf(script, MAX_PATH, L"%s\\..\\scripts\\install.ps1", s_dir);
     path_in_dir(xbe, L"game\\default.xbe");
     if (!exists(script)) {
-        MessageBoxW(w, L"Falta scripts\\install.ps1 ao lado da pasta mka.", L"Mortal Kombat: Armageddon", MB_ICONERROR);
+        MessageBoxW(w, TR(L"scripts\\install.ps1 is missing beside the mka folder.", L"Falta scripts\\install.ps1 ao lado da pasta mka."), L"Mortal Kombat: Armageddon", MB_ICONERROR);
         return;
     }
     if (!*s_disc && !exists(xbe)) {
-        MessageBoxW(w, L"Escolha a sua ISO primeiro.", L"Mortal Kombat: Armageddon", MB_ICONINFORMATION);
+        MessageBoxW(w, TR(L"Choose your ISO first.", L"Escolha a sua ISO primeiro."), L"Mortal Kombat: Armageddon", MB_ICONINFORMATION);
         return;
     }
     if (*s_disc)
-        swprintf(cmd, 4 * MAX_PATH, L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%s\" -Disc \"%s\"", script, s_disc);
+        swprintf(cmd, 4 * MAX_PATH, L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%s\" -Lang %s -Disc \"%s\"",
+                 script, TR(L"en", L"pt-BR"), s_disc);
     else
-        swprintf(cmd, 4 * MAX_PATH, L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%s\"", script);
+        swprintf(cmd, 4 * MAX_PATH, L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%s\" -Lang %s", script,
+                 TR(L"en", L"pt-BR"));
     if (!CreateProcessW(NULL, cmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, s_dir, &si, &pi)) {
-        MessageBoxW(w, L"Não foi possível abrir o PowerShell.", L"Mortal Kombat: Armageddon", MB_ICONERROR);
+        MessageBoxW(w, TR(L"PowerShell could not be opened.", L"Não foi possível abrir o PowerShell."), L"Mortal Kombat: Armageddon", MB_ICONERROR);
         return;
     }
     CloseHandle(pi.hThread);
@@ -677,7 +705,8 @@ static void add_to_steam(HWND w)
     int users = 0, added = 0;
     wchar_t *slash;
     if (RegGetValueW(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"SteamPath", RRF_RT_REG_SZ, NULL, steam, &size)) {
-        MessageBoxW(w, L"A Steam não foi encontrada neste computador.", L"Adicionar à Steam", MB_ICONWARNING);
+        MessageBoxW(w, TR(L"Steam was not found on this computer.", L"A Steam não foi encontrada neste computador."),
+                    TR(L"Add to Steam", L"Adicionar à Steam"), MB_ICONWARNING);
         return;
     }
     for (slash = steam; *slash; slash++) if (*slash == L'/') *slash = L'\\';
@@ -688,8 +717,9 @@ static void add_to_steam(HWND w)
             const int alive = WaitForSingleObject(p, 0) == WAIT_TIMEOUT;
             CloseHandle(p);
             if (alive) {
-                MessageBoxW(w, L"Feche a Steam (Steam > Sair) e tente de novo: ela reescreve a lista de atalhos ao fechar.",
-                            L"Adicionar à Steam", MB_ICONINFORMATION);
+                MessageBoxW(w, TR(L"Close Steam (Steam > Exit) and try again: it rewrites its list of shortcuts when it closes.",
+                                  L"Feche a Steam (Steam > Sair) e tente de novo: ela reescreve a lista de atalhos ao fechar."),
+                            TR(L"Add to Steam", L"Adicionar à Steam"), MB_ICONINFORMATION);
                 return;
             }
         }
@@ -713,29 +743,23 @@ static void add_to_steam(HWND w)
         } while (FindNextFileW(find, &fd));
         FindClose(find);
     }
-    MessageBoxW(w, !users ? L"A Steam não tem nenhuma conta neste computador."
-                   : added ? L"Pronto: abra a Steam e o jogo estará na biblioteca."
-                           : L"Não foi possível gravar o atalho na Steam (shortcuts.vdf).",
-                L"Adicionar à Steam", added ? MB_ICONINFORMATION : MB_ICONWARNING);
+    MessageBoxW(w, !users ? TR(L"Steam has no account on this computer.", L"A Steam não tem nenhuma conta neste computador.")
+                   : added ? TR(L"Done: open Steam and the game is in your library.",
+                                L"Pronto: abra a Steam e o jogo estará na biblioteca.")
+                           : TR(L"The Steam shortcut could not be written (shortcuts.vdf).",
+                                L"Não foi possível gravar o atalho na Steam (shortcuts.vdf)."),
+                TR(L"Add to Steam", L"Adicionar à Steam"), added ? MB_ICONINFORMATION : MB_ICONWARNING);
 }
 
 /* ---- starting the game --------------------------------------------------------------------------------------- */
 
 static void env(const wchar_t *name, const wchar_t *value) { SetEnvironmentVariableW(name, value); }
 
-static void save_and_play(HWND w)
+/* The dialog's settings into video.ini and launcher.ini. */
+static void save_settings(void)
 {
-    char v[32];
-    wchar_t path[MAX_PATH], game[MAX_PATH], out[MAX_PATH], err[MAX_PATH], cmd[MAX_PATH + 4];
+    char v[32], pad_map[256];
     int res = sel(ID_RES), win = sel(ID_WIN), aa = sel(ID_AA), aspect = sel(ID_ASPECT);
-    int two = sel(ID_PLAYERS) == 1, kb_only = sel(ID_P1) == 1, hd = checked(ID_HD), intros = checked(ID_INTROS);
-    int unlock = checked(ID_UNLOCK);
-    char pad_map[256];
-    wchar_t wmap[256], packs[2 * MAX_PATH + 2];
-    SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
-    STARTUPINFOW si = { sizeof(si) };
-    PROCESS_INFORMATION pi;
-    HANDLE ho, he;
 
     ini_load(L"video.ini");
     snprintf(v, sizeof(v), "%u", k_heights[res < 0 ? 3 : res]); ini_set("internal_height", v);
@@ -750,18 +774,47 @@ static void save_and_play(HWND w)
     ini_save(L"video.ini");
 
     ini_load(L"launcher.ini");
-    ini_set("hd_textures", hd ? "1" : "0");
-    ini_set("skip_intros", intros ? "1" : "0");
-    ini_set("players", two ? "2" : "1");
-    ini_set("p1_keyboard_only", kb_only ? "1" : "0");
-    ini_set("unlock_all", unlock ? "1" : "0");
+    ini_set("language", s_lang ? "pt-BR" : "en");
+    ini_set("hd_textures", checked(ID_HD) ? "1" : "0");
+    ini_set("skip_intros", checked(ID_INTROS) ? "1" : "0");
+    ini_set("players", sel(ID_PLAYERS) == 1 ? "2" : "1");
+    ini_set("p1_keyboard_only", sel(ID_P1) == 1 ? "1" : "0");
+    ini_set("unlock_all", checked(ID_UNLOCK) ? "1" : "0");
     map_string(pad_map, sizeof(pad_map));
     ini_set("pad_map", pad_map);
     ini_save(L"launcher.ini");
+}
+
+/* Every control gone, then built again (in the language just chosen). */
+static BOOL CALLBACK destroy_child(HWND c, LPARAM unused) { (void)unused; DestroyWindow(c); return TRUE; }
+static void rebuild(HWND w)
+{
+    EnumChildWindows(w, destroy_child, 0);
+    memset(s_ctl, 0, sizeof(s_ctl));
+    ini_load(L"video.ini");
+    build(w);
+    InvalidateRect(w, NULL, TRUE);
+}
+
+static void save_and_play(HWND w)
+{
+    wchar_t path[MAX_PATH], game[MAX_PATH], out[MAX_PATH], err[MAX_PATH], cmd[MAX_PATH + 4];
+    int two = sel(ID_PLAYERS) == 1, kb_only = sel(ID_P1) == 1, hd = checked(ID_HD), intros = checked(ID_INTROS);
+    int unlock = checked(ID_UNLOCK);
+    char pad_map[256];
+    wchar_t wmap[256], packs[2 * MAX_PATH + 2];
+    SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
+    STARTUPINFOW si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+    HANDLE ho, he;
+
+    save_settings();
+    map_string(pad_map, sizeof(pad_map));
 
     path_in_dir(game, L"build\\Release\\mka_recomp.exe");
     if (!exists(game)) {
-        MessageBoxW(w, L"O jogo ainda não foi instalado: escolha a sua ISO e clique em Instalar e compilar.",
+        MessageBoxW(w, TR(L"The game is not installed yet: choose your ISO and click Install and compile.",
+                          L"O jogo ainda não foi instalado: escolha a sua ISO e clique em Instalar e compilar."),
                     L"Mortal Kombat: Armageddon", MB_ICONINFORMATION);
         return;
     }
@@ -787,9 +840,9 @@ static void save_and_play(HWND w)
     env(L"RECOMP_KELVIN_GPU", L"1");
     path_in_dir(path, L"kgpu-cache"); CreateDirectoryW(path, NULL); env(L"RECOMP_KGPU_CACHE", path);
     env(L"RECOMP_KELVIN_THREADS", L"12");
-    /* The video settings page, in the game's Options > VIDEO ([RB] / [V]), in Portuguese and with MKA's rows only. */
+    /* The video settings page, in the game's Options > VIDEO ([RB] / [V]), in the launcher's language, MKA's rows only. */
     env(L"RECOMP_NATIVE_MENUS", L"0");
-    env(L"RECOMP_LANGUAGE", L"pt-BR");
+    env(L"RECOMP_LANGUAGE", TR(L"en", L"pt-BR"));
     env(L"RECOMP_VIDEO_MENU_HIDE", L"dof,ao_method,ao_quality,reflections,rt,fov,blur,crosshair,hitmarkers");
     /* The remake of the arts and menus goes first; the full pack recognises the textures and fills in the rest.
      * The packs' optional sets are left out (the remake's own readme calls its Bonus Test incomplete). */
@@ -805,7 +858,8 @@ static void save_and_play(HWND w)
         wchar_t copy[MAX_PATH];
         path_in_dir(copy, L"save_desbloqueado");
         if (!copy_saves(path, copy)) {
-            MessageBoxW(w, L"Não foi possível preparar a cópia dos saves para a sessão desbloqueada.",
+            MessageBoxW(w, TR(L"The copy of the saves for the unlocked session could not be made.",
+                              L"Não foi possível preparar a cópia dos saves para a sessão desbloqueada."),
                         L"Mortal Kombat: Armageddon", MB_ICONERROR);
             return;
         }
@@ -826,7 +880,7 @@ static void save_and_play(HWND w)
     si.hStdError = he;
     swprintf(cmd, MAX_PATH + 4, L"\"%s\"", game);
     if (!CreateProcessW(game, cmd, NULL, NULL, TRUE, 0, NULL, s_dir, &si, &pi)) {
-        MessageBoxW(w, L"Não foi possível iniciar o jogo.", L"Mortal Kombat: Armageddon", MB_ICONERROR);
+        MessageBoxW(w, TR(L"The game could not be started.", L"Não foi possível iniciar o jogo."), L"Mortal Kombat: Armageddon", MB_ICONERROR);
     } else {
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
@@ -846,6 +900,15 @@ static LRESULT CALLBACK wndproc(HWND w, UINT m, WPARAM wp, LPARAM lp)
     case WM_COMMAND:
         switch (LOWORD(wp)) {
         case ID_ASPECT: if (HIWORD(wp) == CBN_SELCHANGE) fill_win(sel(ID_WIN)); break;
+        case ID_LANG:
+            if (HIWORD(wp) == CBN_SELCHANGE && sel(ID_LANG) != s_lang) {
+                save_settings();
+                s_lang = sel(ID_LANG) == 1;
+                save_settings();
+                SetWindowTextW(w, TR(L"Mortal Kombat: Armageddon — Settings", L"Mortal Kombat: Armageddon — Configurações"));
+                PostMessageW(w, WM_APP, 0, 0);       /* not inside the list's own notification */
+            }
+            break;
         case ID_CHOOSE: choose_disc(w); break;
         case ID_INSTALL: install_game(w); break;
         case ID_HD_FOLDER: open_hd_folder(); break;
@@ -856,6 +919,9 @@ static LRESULT CALLBACK wndproc(HWND w, UINT m, WPARAM wp, LPARAM lp)
         case ID_PLAY: save_and_play(w); break;
         case ID_CLOSE: DestroyWindow(w); break;
         }
+        return 0;
+    case WM_APP:
+        rebuild(w);
         return 0;
     case WM_CTLCOLORSTATIC:
         SetBkMode((HDC)wp, TRANSPARENT);
@@ -872,7 +938,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR args, int show)
     NONCLIENTMETRICSW ncm = { sizeof(ncm) };
     INITCOMMONCONTROLSEX icc = { sizeof(icc), ICC_STANDARD_CLASSES };
     WNDCLASSW wc = { 0 };
-    RECT r = { 0, 0, 510, 752 };
+    RECT r = { 0, 0, 510, 792 };
     wchar_t *slash, probe[MAX_PATH];
     HWND w;
     MSG msg;
@@ -885,6 +951,9 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR args, int show)
     swprintf(probe, MAX_PATH, L"%s\\mka\\CMakeLists.txt", s_dir);
     if (exists(probe)) wcscat_s(s_dir, MAX_PATH, L"\\mka");
     find_packs();
+    /* English unless the player chose Portuguese (launcher.ini language=pt-BR) */
+    ini_load(L"launcher.ini");
+    s_lang = !_stricmp(ini_get("language", "en"), "pt-BR");
 
     InitCommonControlsEx(&icc);
     SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
@@ -898,7 +967,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR args, int show)
     wc.lpszClassName = L"MkaLauncher";
     RegisterClassW(&wc);
     AdjustWindowRect(&r, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE);
-    w = CreateWindowW(wc.lpszClassName, L"Mortal Kombat: Armageddon — Configurações",
+    w = CreateWindowW(wc.lpszClassName, TR(L"Mortal Kombat: Armageddon — Settings", L"Mortal Kombat: Armageddon — Configurações"),
                       WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT,
                       r.right - r.left, r.bottom - r.top, NULL, NULL, inst, NULL);
     ShowWindow(w, show);

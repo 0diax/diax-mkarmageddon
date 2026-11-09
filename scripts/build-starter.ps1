@@ -3,7 +3,7 @@ param()
 
 # Builds the starter ZIP (the release download players use): the launcher already compiled, beside every source
 # it needs to build the game (this repository's, xboxrecomp's and dsp56300's, as plain folders: no git, no
-# submodules), START AQUI.txt and SHA256SUMS. Never any game file: the player brings their own disc.
+# submodules), START HERE.txt and SHA256SUMS. Never any game file: the player brings their own disc.
 # Made from what is committed (git archive), with the launcher compiled from that same copy.
 #   .\scripts\build-starter.ps1   ->  .work\starter\MKArmageddon-<VERSION>-starter.zip
 $ErrorActionPreference = 'Stop'
