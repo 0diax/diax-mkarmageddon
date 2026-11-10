@@ -15,6 +15,13 @@ project(mka_recomp C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# The sources are UTF-8 (the menus' translations have accents). Without /utf-8, MSVC reads them in the PC's
+# code page for non-Unicode programs, and on a Japanese one (932) "FENÊTRÉ" swallows its closing quote and
+# pc_menu.c no longer compiles. Set for every target, the runtime's included.
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 # Common definitions
 add_compile_definitions(
     WIN32_LEAN_AND_MEAN
