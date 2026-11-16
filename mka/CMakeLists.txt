@@ -144,9 +144,9 @@ endif()
 #
 # The settings window (disc and installation, video, game, controls); it writes
 # video.ini / launcher.ini and starts the game with run.cmd's environment.
-# Copied next to run.cmd as "MK Armageddon.exe".
+# Copied next to run.cmd as "MK Armageddon.exe". It draws itself (GDI+ shapes, GDI text).
 add_executable(mka_launcher WIN32 launcher/launcher.c launcher/launcher.rc)
-target_link_libraries(mka_launcher PRIVATE comctl32 comdlg32 shell32 user32 advapi32)
+target_link_libraries(mka_launcher PRIVATE comdlg32 shell32 user32 gdi32 gdiplus advapi32)
 if(MSVC)
     target_compile_options(mka_launcher PRIVATE /utf-8)
 endif()

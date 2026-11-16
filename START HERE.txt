@@ -5,18 +5,18 @@ WINDOWS (10/11, 64-bit, graphics card with Direct3D 11)
 
 1. Extract the whole ZIP into a folder you can write to, for example C:\Games\MK Armageddon.
    Do not run the launcher from inside the ZIP.
-2. Open "MK Armageddon.exe". "Language / Idioma" at the top switches the launcher to Portuguese.
-3. Click "Choose ISO..." and select YOUR Mortal Kombat: Armageddon ISO for the original Xbox (NTSC-U),
+2. Open "MK Armageddon.exe". "Language / Idioma", at the bottom left, switches the launcher to Portuguese.
+3. On the Home page, click "Choose ISO…" and select YOUR Mortal Kombat: Armageddon ISO for the original Xbox (NTSC-U),
    or the default.xbe of a disc already extracted. The launcher checks that it is the supported release.
-4. Click "Install and compile". The first time, it installs what is missing (Python, CMake, Visual Studio
+4. Click "Install and Compile". The first time, it installs what is missing (Python, CMake, Visual Studio
    Build Tools and Rust, through winget, asking first) and needs the internet. Generating and compiling
    take several minutes. At the end the launcher opens again.
 5. Play.
 
 HD TEXTURES (OPTIONAL)
-"Get HD pack (PS2)" and "Get HD remake" open the authors' pages. Download the packs and, in "Open folder",
-extract the downloads as they came (any subfolder works). Open the launcher again and turn on
-"HD textures". The packs are not included; the credits are in README.md.
+On the Video page, "Get HD Pack (PS2)" and "Get HD Remake" open the authors' pages. Download the packs and,
+in "Open Folder", extract the downloads as they came (any subfolder works). Open the launcher again and turn
+on "Use HD Textures". The packs are not included; the credits are in README.md.
 
 YOUR GAME FILES
 This download has the launcher and the source code. You provide your own disc; the game's executable is
@@ -33,8 +33,8 @@ WINDOWS (10/11, 64 bits, placa de vídeo com Direct3D 11)
 
 1. Extraia o ZIP inteiro numa pasta com permissão de escrita, por exemplo C:\Jogos\MK Armageddon.
    Não rode o launcher de dentro do ZIP.
-2. Abra "MK Armageddon.exe" e, em "Language / Idioma", escolha "Português (Brasil)".
-3. Clique em "Escolher a ISO..." e selecione a SUA ISO do Mortal Kombat: Armageddon do Xbox original
+2. Abra "MK Armageddon.exe" e, em "Language / Idioma", embaixo à esquerda, escolha "Português".
+3. Na página Início, clique em "Escolher a ISO…" e selecione a SUA ISO do Mortal Kombat: Armageddon do Xbox original
    (NTSC-U), ou o default.xbe de um disco já extraído. O launcher confere se é a versão suportada.
 4. Clique em "Instalar e compilar". Na primeira vez ele instala o que faltar (Python, CMake, Visual Studio
    Build Tools e Rust, pelo winget, perguntando antes) e precisa de internet. A geração e a compilação
@@ -42,9 +42,9 @@ WINDOWS (10/11, 64 bits, placa de vídeo com Direct3D 11)
 5. Jogar.
 
 TEXTURAS HD (OPCIONAL)
-"Baixar pacote HD (PS2)" e "Baixar remake HD" abrem as páginas dos autores. Baixe os pacotes e, em
-"Abrir a pasta", extraia os downloads como vieram (qualquer subpasta serve). Reabra o launcher e ligue
-"Texturas HD". Os pacotes não vêm junto; os créditos estão no README.md.
+Na página Vídeo, "Baixar pacote HD (PS2)" e "Baixar remake HD" abrem as páginas dos autores. Baixe os pacotes
+e, em "Abrir a pasta", extraia os downloads como vieram (qualquer subpasta serve). Reabra o launcher e ligue
+"Usar texturas HD". Os pacotes não vêm junto; os créditos estão no README.md.
 
 OS SEUS ARQUIVOS DO JOGO
 Este download traz o launcher e o código-fonte. Você fornece o seu próprio disco; o executável do jogo é

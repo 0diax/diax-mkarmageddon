@@ -356,11 +356,15 @@ static int parse_bindings(const char *action, const char *value, PcBindingList *
     return -1;
 }
 
+static void pad_keys_load(void);
+
 static void load_config(void)
 {
     char name[96];
     const char *v;
     int a;
+
+    pad_keys_load();
 
     s_input_mode = parse_mode("RECOMP_PC_INPUT_MODE", getenv("RECOMP_PC_INPUT_MODE"), PC_MODE_AUTO);
     s_prompt_mode = parse_mode("RECOMP_PC_PROMPT_MODE", getenv("RECOMP_PC_PROMPT_MODE"), PC_MODE_AUTO);
@@ -1181,32 +1185,108 @@ static int pad_layout(void)
     return v;
 }
 
+/* That controller's buttons and the keys of each. RECOMP_KEY_MAP (the launcher exports the player's choices) replaces
+ * the keys of the buttons it names: "BUTTON=Key/Key,BUTTON=Key", with the buttons named as RECOMP_PAD_MAP names them
+ * plus UP DOWN LEFT RIGHT (the D-pad and the left stick together: Motor Kombat steers with the stick alone), and the
+ * keys as RECOMP_PC_BIND_* names them, plus Esc and "#1C" for any other scancode in hex (0x100 set for an extended
+ * key). "None" leaves a button without keys; a button not named keeps its own. F11 stays the host's. */
+enum { PL_UP, PL_DOWN, PL_LEFT, PL_RIGHT, PL_A, PL_B, PL_X, PL_Y, PL_LB, PL_RB, PL_LT, PL_RT, PL_START, PL_BACK,
+       PL_L3, PL_R3, PL_COUNT };
+#define PL_KEYS 4
+static const char *const k_pl_names[PL_COUNT] = { "UP", "DOWN", "LEFT", "RIGHT", "A", "B", "X", "Y", "LB", "RB", "LT",
+                                                  "RT", "START", "BACK", "L3", "R3" };
+static const uint32_t k_pl_controls[PL_COUNT] = {
+    1u << CTL_DPAD_UP | 1u << CTL_LS_UP, 1u << CTL_DPAD_DOWN | 1u << CTL_LS_DOWN,
+    1u << CTL_DPAD_LEFT | 1u << CTL_LS_LEFT, 1u << CTL_DPAD_RIGHT | 1u << CTL_LS_RIGHT,
+    1u << CTL_A, 1u << CTL_B, 1u << CTL_X, 1u << CTL_Y, 1u << CTL_BLACK, 1u << CTL_WHITE, 1u << CTL_LT, 1u << CTL_RT,
+    1u << CTL_START, 1u << CTL_BACK, 1u << CTL_LTHUMB, 1u << CTL_RTHUMB
+};
+/* Laid out for a fighting game. The mouse: left click confirms, right click goes back, the wheel steps up and down. */
+static const char *const k_pl_default[PL_COUNT] = {
+    "W/Up/WheelUp", "S/Down/WheelDown", "A/Left", "D/Right", "K/Enter/Mouse1", "I/Backspace/Mouse2", "J", "U", "H", "N",
+    "O", "L/Space", "Esc", "Tab", "None", "None"
+};
+static uint16_t s_pl_keys[PL_COUNT][PL_KEYS];
+static int s_pl_count[PL_COUNT];
+
+static unsigned pad_key_id(const char *tok)
+{
+    const struct KeyName *k;
+    if (!_stricmp(tok, "Esc") || !_stricmp(tok, "Escape")) return KEY_ESC;
+    if (*tok == '#') {
+        char *end;
+        const unsigned long id = strtoul(tok + 1, &end, 16);
+        return end != tok + 1 && !*end && id && id < SRC_KEY_LIMIT && id != KEY_F11 ? (unsigned)id : 0;
+    }
+    k = key_by_name(tok);
+    return k ? k->id : 0;
+}
+
+/* "Key/Key" into one button's list (emptied first); unknown names are reported and skipped. */
+static void pad_keys_parse(int button, const char *value, size_t n)
+{
+    char buf[128], *tok, *ctx = NULL;
+    if (n >= sizeof(buf)) n = sizeof(buf) - 1;
+    memcpy(buf, value, n);
+    buf[n] = 0;
+    s_pl_count[button] = 0;
+    for (tok = strtok_s(buf, "/ ", &ctx); tok; tok = strtok_s(NULL, "/ ", &ctx)) {
+        const unsigned id = pad_key_id(tok);
+        if (!_stricmp(tok, "None")) continue;
+        if (!id) fprintf(stderr, "[INPUT] RECOMP_KEY_MAP: %s: unknown key '%s' ignored\n", k_pl_names[button], tok);
+        else if (s_pl_count[button] < PL_KEYS) s_pl_keys[button][s_pl_count[button]++] = (uint16_t)id;
+    }
+}
+
+static void pad_keys_load(void)
+{
+    const char *p = getenv("RECOMP_KEY_MAP");
+    int b, i, enter = -1, numenter = 0;
+    for (b = 0; b < PL_COUNT; b++) pad_keys_parse(b, k_pl_default[b], strlen(k_pl_default[b]));
+    while (p && *p) {
+        const char *eq = strchr(p, '='), *end = strchr(p, ',');
+        if (!end) end = p + strlen(p);
+        if (eq && eq < end) {
+            for (b = 0; b < PL_COUNT; b++)
+                if (strlen(k_pl_names[b]) == (size_t)(eq - p) && !_strnicmp(k_pl_names[b], p, (size_t)(eq - p))) break;
+            if (b < PL_COUNT) pad_keys_parse(b, eq + 1, (size_t)(end - eq - 1));
+            else fprintf(stderr, "[INPUT] RECOMP_KEY_MAP: unknown button in '%.*s'\n", (int)(end - p), p);
+        }
+        p = *end ? end + 1 : end;
+    }
+    /* the numeric keypad's Enter does what Enter does, unless it was given a button of its own */
+    for (b = 0; b < PL_COUNT; b++)
+        for (i = 0; i < s_pl_count[b]; i++) {
+            if (s_pl_keys[b][i] == KEY_ENTER) enter = b;
+            if (s_pl_keys[b][i] == KEY_NUMENTER) numenter = 1;
+        }
+    if (enter >= 0 && !numenter && s_pl_count[enter] < PL_KEYS) s_pl_keys[enter][s_pl_count[enter]++] = KEY_NUMENTER;
+}
+
+/* Held, or tapped within the latch -- whatever context the press was
+ * recorded in. src_active_raw asks for the title's gameplay context, which a
+ * title without the title's camera hook never enters: only Enter (recorded
+ * as "any context") got through. */
+static int pad_key_held(unsigned k, uint64_t now)
+{
+    if (k == SRC_ANY_SHIFT) return pad_key_held(KEY_LSHIFT, now) || pad_key_held(KEY_RSHIFT, now);
+    if (k == SRC_ANY_CTRL) return pad_key_held(KEY_LCTRL, now) || pad_key_held(KEY_RCTRL, now);
+    if (k == SRC_ANY_ALT) return pad_key_held(KEY_LALT, now) || pad_key_held(KEY_RALT, now);
+    return k < SRC_COUNT && (s_down[k] || (uint64_t)s_latch[k] > now);
+}
+
 static uint32_t pad_layout_controls(uint64_t now)
 {
-    static const struct { unsigned key; int ctl; } map[] = {
-        { 0x11, CTL_DPAD_UP }, { 0x1F, CTL_DPAD_DOWN }, { 0x1E, CTL_DPAD_LEFT }, { 0x20, CTL_DPAD_RIGHT },
-        { KEY_UP, CTL_DPAD_UP }, { KEY_DOWN, CTL_DPAD_DOWN }, { KEY_LEFT, CTL_DPAD_LEFT }, { KEY_RIGHT, CTL_DPAD_RIGHT },
-        /* and the left stick the same way: Motor Kombat steers with the stick alone */
-        { 0x11, CTL_LS_UP }, { 0x1F, CTL_LS_DOWN }, { 0x1E, CTL_LS_LEFT }, { 0x20, CTL_LS_RIGHT },
-        { KEY_UP, CTL_LS_UP }, { KEY_DOWN, CTL_LS_DOWN }, { KEY_LEFT, CTL_LS_LEFT }, { KEY_RIGHT, CTL_LS_RIGHT },
-        { 0x24, CTL_X }, { 0x25, CTL_A }, { 0x16, CTL_Y }, { 0x17, CTL_B },        /* J K U I */
-        { 0x26, CTL_RT }, { KEY_SPACE, CTL_RT }, { 0x18, CTL_LT },               /* L Space O */
-        { 0x23, CTL_BLACK }, { 0x31, CTL_WHITE },                               /* H N */
-        { KEY_ESC, CTL_START }, { 0x0F, CTL_BACK },                             /* Esc Tab */
-        { KEY_ENTER, CTL_A }, { KEY_NUMENTER, CTL_A }, { KEY_BACKSPACE, CTL_B },
-        /* the mouse: left click confirms, right click goes back, the wheel steps up and down */
-        { SRC_MOUSE0 + 0, CTL_A }, { SRC_MOUSE0 + 1, CTL_B }, { SRC_WHEEL_UP, CTL_DPAD_UP }, { SRC_WHEEL_DOWN, CTL_DPAD_DOWN },
-    };
+    const uint32_t stick = 1u << CTL_LS_UP | 1u << CTL_LS_DOWN | 1u << CTL_LS_LEFT | 1u << CTL_LS_RIGHT;
     uint32_t bits = 0;
-    size_t i;
-    /* Held, or tapped within the latch -- whatever context the press was
-     * recorded in. src_active_raw asks for the title's gameplay context, which a
-     * title without the title's camera hook never enters: only Enter (recorded
-     * as "any context") got through. */
-    for (i = 0; i < sizeof(map) / sizeof(map[0]); i++) {
-        const unsigned k = map[i].key;
-        if (s_down[k] || (uint64_t)s_latch[k] > now) bits |= 1u << map[i].ctl;
-    }
+    int b, i;
+    for (b = 0; b < PL_COUNT; b++)
+        for (i = 0; i < s_pl_count[b]; i++) {
+            const unsigned k = s_pl_keys[b][i];
+            if (!pad_key_held(k, now)) continue;
+            /* a notch of the wheel is one step of the D-pad, not a push of the stick */
+            bits |= k == SRC_WHEEL_UP || k == SRC_WHEEL_DOWN ? k_pl_controls[b] & ~stick : k_pl_controls[b];
+        }
     return bits;
 }
 

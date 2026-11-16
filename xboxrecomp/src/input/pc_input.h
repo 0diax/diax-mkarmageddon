@@ -32,6 +32,11 @@
  *                                  CapsLock Minus Equals LBracket RBracket Semicolon Quote Grave
  *                                  Comma Period Slash Backslash Mouse1..Mouse5 WheelUp WheelDown
  *                                  None; separated by commas.
+ *   RECOMP_KEY_LAYOUT=pad       the keyboard and mouse as a plain controller, for a title without the hooks above
+ *   RECOMP_KEY_MAP              that controller's keys, "BUTTON=Key/Key,...": UP DOWN LEFT RIGHT A B X Y LB RB LT RT
+ *                                  START BACK L3 R3, each with the key names above, Esc, or "#1C" (a scancode in
+ *                                  hex, 0x100 set for an extended key); None leaves a button without keys
+ *   RECOMP_MOUSE_STEP           mouse counts per menu step under RECOMP_KEY_LAYOUT=pad (150; 0 = off)
  *   RECOMP_INPUT_SCRIPT            scripted host events for tests (see pc_input.c)
  */
 #ifndef XBOXRECOMP_PC_INPUT_H

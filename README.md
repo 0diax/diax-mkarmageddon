@@ -51,7 +51,7 @@ target (most with invalid addresses, false positives of the analysis), and none 
 | Install from the ISO | ✅ Working | The launcher checks the disc, generates the code and compiles it |
 | Graphics (Direct3D 11) | ✅ Working | Internal resolution from 480p to 4K, FXAA and SSAA |
 | Movies (intro, cutscenes) | ✅ Working | |
-| Controls | ✅ Working | Xbox, DualShock 4, DualSense, keyboard; mouse in the menus |
+| Controls | ✅ Working | Xbox, DualShock 4, DualSense, keyboard and mouse, all remappable |
 | Local 2 players | ✅ Working | The second controller joins by pressing Start |
 | Profiles and saves | ✅ Working | Create a profile, sign in with its kode, save |
 | Kombat (Arcade, Versus, Practice) | ✅ Working | Character select and fights |
@@ -80,9 +80,11 @@ target (most with invalid addresses, false positives of the analysis), and none 
 1. Download the [latest release](https://github.com/0diax/diax-mkarmageddon/releases/latest):
    **`MKArmageddon-<version>-starter.zip`** (do not use GitHub's "Source code" downloads).
 2. Extract the whole ZIP into a folder you can write to, for example `C:\Games\MK Armageddon`.
-3. Open **`MK Armageddon.exe`**. **Language / Idioma** at the top switches it to Brazilian Portuguese.
-4. Click **Choose ISO...** and select your ISO (or the `default.xbe` of a disc already extracted).
-5. Click **Install and compile**. The first time, it installs what is missing through `winget`, asking first
+3. Open **`MK Armageddon.exe`**. **Language / Idioma**, at the bottom left, switches it to Brazilian
+   Portuguese.
+4. On the **Home** page, click **Choose ISO…** and select your ISO (or the `default.xbe` of a disc already
+   extracted).
+5. Click **Install and Compile**. The first time, it installs what is missing through `winget`, asking first
    (Python 3 with `capstone`, CMake, Visual Studio Build Tools and Rust), copies the disc, generates the
    game's code and compiles it. It takes several minutes; at the end the launcher opens again.
 6. Click **Play**.
@@ -94,13 +96,15 @@ folder from the old installation into the new one, then choose your ISO and inst
 
 ## Features
 
-- **Launcher** in English or Brazilian Portuguese, with the ISO choice, the installation and the video, game
-  and controller settings.
+- **Launcher** in English or Brazilian Portuguese, in four pages: **Home** (the ISO choice and the
+  installation), **Video**, **Game** and **Controls**. What you change is kept when it closes.
 - **Internal resolution** from 480p (the Xbox's) to 4K, **anti-aliasing** FXAA or SSAA, and **V-Sync**.
 - **Widescreen** 16:9 and 21:9, besides the original 4:3.
 - **Borderless fullscreen** or window; F11 switches during the game.
 - **Video settings inside the game**, in Options > Video (RB on the controller or V on the keyboard).
-- **Xbox and PlayStation controllers** (DualShock 4 and DualSense), with button remapping, and keyboard.
+- **Xbox and PlayStation controllers** (DualShock 4 and DualSense), with button remapping.
+- **Keyboard and mouse**, with every key and mouse button rebindable: up to three per action, the mouse
+  buttons and the wheel included.
 - **Mouse in the menus**: in the main menu and the character select, the item under the pointer is selected.
 - **Local 2 players**; with a single controller, the keyboard can be player 1.
 - **HD textures** with the two community packs.
@@ -113,16 +117,16 @@ folder from the old installation into the new one, then choose your ISO and inst
 The game uses the two HD texture packs the community made for the PS2 version in PCSX2. They are not
 included: download them from their authors' pages. Both together give the best result.
 
-1. In the launcher, **Get HD pack (PS2)** opens
+1. In the launcher's **Video** page, **Get HD Pack (PS2)** opens
    [Mortal-Kombat-Armageddon-HD-Textures](https://github.com/ckiscxrsed/Mortal-Kombat-Armageddon-HD-Textures/releases)
-   (`SLUS-21410.rar`; the newer versions are on the Google Drive linked there), and **Get HD remake** opens
+   (`SLUS-21410.rar`; the newer versions are on the Google Drive linked there), and **Get HD Remake** opens
    [Mortal-Kombat-Armageddon-PCSX2-Remaster-Remake-Arts-and-Menus](https://github.com/UstanakChaos/Mortal-Kombat-Armageddon-PCSX2-Remaster-Remake-Arts-and-Menus/releases)
    (`MK.Armageddon.Remake.zip`).
-2. **Open folder** creates and opens `hd-textures`, beside `mka`.
+2. **Open Folder** creates and opens `hd-textures`, beside `mka`.
 3. Extract the downloads there as they came: the PCSX2 layout (`SLUS-21410\replacements\...`) and the
    remake's (`MK Armageddon Remake\SLUS-21543\...`) work as they are. The remake is used first and the PS2
    pack fills in the rest.
-4. Open the launcher again and turn on **HD textures**.
+4. Open the launcher again and turn on **Use HD Textures**.
 
 The game recognises each texture by how it looks (the PS2's have other names) and keeps what it learned in an
 index file in the pack's folder; the first start with a new pack takes longer. The packs' optional folders
@@ -177,17 +181,21 @@ In the main menu, press **L / L2 (ENTER PROFILE KODE)** and enter your profile's
 | Fullscreen | F11 | |
 | Accelerate (Motor Kombat) | Space | |
 
-The controller buttons can be remapped in the launcher, in **Controller buttons**.
+These are the defaults. In the launcher's **Controls** page, **Keyboard & Mouse** changes every key: click one
+and press the new key, click a mouse button or turn the wheel (up to three per action; a right click clears
+one). The mouse's left and right buttons and its wheel confirm, go back and step through the menus, and can be
+rebound the same way; moving the mouse through the menus can be turned off or made slower or faster. The
+**Controller** tab remaps the controller's buttons. F11 always switches fullscreen.
 
 ### How do two people play?
 
 Connect two controllers: the second player joins by pressing Start, as on the console. With a single
-controller, choose **Player 1 uses: Keyboard only** in the launcher so the keyboard is player 1 and the
-controller player 2.
+controller, choose **Player 1 Uses: Keyboard Only** in the launcher's **Game** page so the keyboard is player 1
+and the controller player 2.
 
 ### How can I improve performance?
 
-Lower the **Internal resolution** and use **FXAA** instead of **SSAA** in the launcher.
+Lower the **Internal Resolution** and use **FXAA** instead of **SSAA** in the launcher's **Video** page.
 
 ## Building
 

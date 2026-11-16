@@ -52,7 +52,7 @@ nos testes.
 | Instalação a partir da ISO | ✅ Funcionando | O launcher confere o disco, gera o código e compila |
 | Gráficos (Direct3D 11) | ✅ Funcionando | Resolução interna de 480p a 4K, FXAA e SSAA |
 | Vídeos (abertura, cenas) | ✅ Funcionando | |
-| Controles | ✅ Funcionando | Xbox, DualShock 4, DualSense, teclado; mouse nos menus |
+| Controles | ✅ Funcionando | Xbox, DualShock 4, DualSense, teclado e mouse, todos remapeáveis |
 | 2 jogadores locais | ✅ Funcionando | O segundo controle entra apertando Start |
 | Perfis e saves | ✅ Funcionando | Criar perfil, entrar com o kode, salvar |
 | Kombat (Arcade, Versus, Practice) | ✅ Funcionando | Seleção de lutadores e lutas |
@@ -81,9 +81,10 @@ nos testes.
 1. Baixe a [versão mais recente](https://github.com/0diax/diax-mkarmageddon/releases/latest):
    **`MKArmageddon-<versão>-starter.zip`** (não use os downloads "Source code" do GitHub).
 2. Extraia o ZIP inteiro numa pasta com permissão de escrita, por exemplo `C:\Jogos\MK Armageddon`.
-3. Abra **`MK Armageddon.exe`**. O launcher abre em inglês: em **Language / Idioma**, escolha
-   **Português (Brasil)**.
-4. Clique em **Escolher a ISO...** e selecione a sua ISO (ou o `default.xbe` de um disco já extraído).
+3. Abra **`MK Armageddon.exe`**. O launcher abre em inglês: em **Language / Idioma**, embaixo à esquerda,
+   escolha **Português**.
+4. Na página **Início**, clique em **Escolher a ISO…** e selecione a sua ISO (ou o `default.xbe` de um disco
+   já extraído).
 5. Clique em **Instalar e compilar**. Na primeira vez ele instala o que faltar pelo `winget`, perguntando
    antes (Python 3 com `capstone`, CMake, Visual Studio Build Tools e Rust), copia o disco, gera o código do
    jogo e compila. Leva vários minutos; no fim o launcher abre de novo.
@@ -96,13 +97,15 @@ da instalação antiga para a nova, e escolha a ISO e instale de novo.
 
 ## Recursos
 
-- **Launcher** em inglês ou português, com a escolha da ISO, a instalação e as configurações de vídeo, jogo e
-  controles.
+- **Launcher** em inglês ou português, em quatro páginas: **Início** (a escolha da ISO e a instalação),
+  **Vídeo**, **Jogo** e **Controles**. O que você muda fica guardado quando ele fecha.
 - **Resolução interna** de 480p (a do Xbox) a 4K, **anti-aliasing** FXAA ou SSAA e **V-Sync**.
 - **Widescreen** 16:9 e 21:9, além do 4:3 original.
 - **Tela cheia** sem bordas ou janela; F11 alterna durante o jogo.
 - **Configurações de vídeo dentro do jogo**, em Options > Video (RB no controle ou V no teclado).
-- **Controles** de Xbox e PlayStation (DualShock 4 e DualSense), com troca de botões, e teclado.
+- **Controles** de Xbox e PlayStation (DualShock 4 e DualSense), com troca de botões.
+- **Teclado e mouse**, com todas as teclas e botões do mouse configuráveis: até três por ação, incluindo os
+  botões e a roda do mouse.
 - **Mouse nos menus**: no menu principal e na seleção de lutadores, o item embaixo do ponteiro é selecionado.
 - **2 jogadores locais**; com um controle só, o teclado pode ser o jogador 1.
 - **Texturas HD** com os dois pacotes da comunidade.
@@ -115,7 +118,7 @@ da instalação antiga para a nova, e escolha a ISO e instale de novo.
 O jogo usa os dois pacotes de texturas HD feitos pela comunidade para a versão de PS2 no PCSX2. Eles não vêm
 junto: baixe-os das páginas dos autores. Os dois juntos dão o melhor resultado.
 
-1. No launcher, **Baixar pacote HD (PS2)** abre a página de
+1. Na página **Vídeo** do launcher, **Baixar pacote HD (PS2)** abre a página de
    [Mortal-Kombat-Armageddon-HD-Textures](https://github.com/ckiscxrsed/Mortal-Kombat-Armageddon-HD-Textures/releases)
    (`SLUS-21410.rar`; as versões mais novas estão no Google Drive indicado lá), e **Baixar remake HD** abre a de
    [Mortal-Kombat-Armageddon-PCSX2-Remaster-Remake-Arts-and-Menus](https://github.com/UstanakChaos/Mortal-Kombat-Armageddon-PCSX2-Remaster-Remake-Arts-and-Menus/releases)
@@ -124,7 +127,7 @@ junto: baixe-os das páginas dos autores. Os dois juntos dão o melhor resultado
 3. Extraia os downloads ali, do jeito que vieram: o layout do PCSX2 (`SLUS-21410\replacements\...`) e o do
    remake (`MK Armageddon Remake\SLUS-21543\...`) servem como estão. O remake é usado primeiro e o pacote de
    PS2 completa o resto.
-4. Reabra o launcher e ligue **Texturas HD**.
+4. Reabra o launcher e ligue **Usar texturas HD**.
 
 O jogo reconhece cada textura pela aparência (as do PS2 têm outros nomes) e guarda o que aprendeu num arquivo
 de índice na pasta do pacote; o primeiro início com um pacote novo demora mais. As pastas opcionais dos
@@ -180,16 +183,21 @@ No menu principal, aperte **L / L2 (ENTER PROFILE KODE)** e digite o kode do seu
 | Tela cheia | F11 | |
 | Acelerar (Motor Kombat) | Espaço | |
 
-Os botões do controle podem ser trocados no launcher, em **Configurar botões do controle**.
+Esses são os padrões. Na página **Controles** do launcher, **Teclado e mouse** troca todas as teclas: clique em
+uma e aperte a nova tecla, clique com um botão do mouse ou gire a roda (até três por ação; o clique direito
+limpa uma). Os botões esquerdo e direito do mouse e a roda confirmam, voltam e percorrem os menus, e podem ser
+trocados do mesmo jeito; o movimento do mouse pelos menus pode ser desligado ou ficar mais lento ou mais rápido.
+A aba **Controle** troca os botões do controle. F11 sempre alterna a tela cheia.
 
 ### Como jogar em dois?
 
 Ligue dois controles: o segundo jogador entra apertando Start, como no console. Com um controle só, escolha
-**Jogador 1 usa: Só teclado** no launcher para o teclado ser o jogador 1 e o controle o jogador 2.
+**Jogador 1 usa: Só teclado** na página **Jogo** do launcher para o teclado ser o jogador 1 e o controle o
+jogador 2.
 
 ### Como melhorar o desempenho?
 
-Diminua a **Resolução interna** e use **FXAA** em vez de **SSAA** no launcher.
+Diminua a **Resolução interna** e use **FXAA** em vez de **SSAA** na página **Vídeo** do launcher.
 
 ## Compilação
 

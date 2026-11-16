@@ -133,8 +133,8 @@ try {
 
     if (-not (Test-Path (Join-Path $root 'hd-textures'))) {
         Step (T 'HD textures (optional)' 'Texturas HD (opcional)')
-        Write-Host (T 'In the launcher, "Get HD pack (PS2)" and "Get HD remake" open the authors'' pages, and "Open folder" shows where to extract the downloads.' `
-                      'No launcher, "Baixar pacote HD (PS2)" e "Baixar remake HD" abrem as páginas dos autores, e "Abrir a pasta" mostra onde extrair os downloads.')
+        Write-Host (T 'In the launcher''s Video page, "Get HD Pack (PS2)" and "Get HD Remake" open the authors'' pages, and "Open Folder" shows where to extract the downloads.' `
+                      'Na página Vídeo do launcher, "Baixar pacote HD (PS2)" e "Baixar remake HD" abrem as páginas dos autores, e "Abrir a pasta" mostra onde extrair os downloads.')
     }
 
     Step (T 'Done' 'Pronto')
