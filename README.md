@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Progress-82%25-22c55e?style=for-the-badge" alt="Progress: 82%">
+  <img src="https://img.shields.io/badge/Progress-76%25-22c55e?style=for-the-badge" alt="Progress: 76%">
 </p>
 
 **diax-mkarmageddon** is a native PC port of **Mortal Kombat: Armageddon**, made by statically recompiling the
@@ -23,20 +23,30 @@ original Xbox game.
 ## Contents
 
 - [Progress](#progress)
+
 - [Requirements](#requirements)
+
 - [Install](#install)
+
 - [Update](#update)
+
 - [Features](#features)
+
 - [HD textures](#hd-textures)
+
 - [Known issues](#known-issues)
+
 - [FAQ](#faq)
+
 - [Building](#building)
+
 - [Credits](#credits)
+
 
 ## Progress
 
-```
-█████████████████████████████████████████░░░░░░░░░  82%
+```text
+██████████████████████████████████████░░░░░░░░░░░░  76%
 ```
 
 The bar comes from an analysis of the generated code and from testing each mode in the game: of the 19 items
@@ -57,7 +67,7 @@ target (most with invalid addresses, false positives of the analysis), and none 
 | Kombat (Arcade, Versus, Practice) | ✅ Working | Character select and fights |
 | Konquest | 🟡 Partial | Intro, cutscenes and the start tested; the full story has not been played to the end |
 | Motor Kombat | ✅ Working | Tracks, karts and races |
-| Kreate a Fighter | ✅ Working | Fighter editor (body, clothes, styles) |
+| Kreate a Fighter | ❌ Not ready | Fighter editor; currently crashing during use |
 | The Krypt | ✅ Working | Item grid and purchases with koins |
 | Extras | ✅ Working | |
 | Options | ✅ Working | Gameplay, audio, video and controls |
